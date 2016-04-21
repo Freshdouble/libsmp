@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1461268473 source:c:\users\local\documents\github\libsmp\libfifo\c\stc_fifo.c
+	"stc_fifo.h"
+
+1461268644 c:\users\local\documents\github\libsmp\libfifo\c\stc_fifo.h
+	<stdint.h>
+

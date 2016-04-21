@@ -27,8 +27,9 @@ unsigned int crc16(unsigned int crc, unsigned int c, unsigned int mask) {
 /* Initialize the smp-buffers                                           */
 
 /************************************************************************/
-void SMP_Init(smp_struct_t* st)
+void SMP_Init(smp_struct_t* st, stc_fifo_t* buffer)
 {
+    st->buffer = buffer;
     st->flags.recieving = 0;
     st->flags.error = 0;
     st->crc = 0;
@@ -142,7 +143,7 @@ inline smp_error_t SMP_RecieveInByte(byte data, smp_struct_t* st) {
             {
                 st->bytesToRecieve = data;
                 st->flags.status = 2;
-                st->buffer.ptr = 0;
+                fifo_clear(st->buffer);
                 st->crc = 0;
                 st->flags.recievedDelimeter = 0;
             }
@@ -158,7 +159,7 @@ inline smp_error_t SMP_RecieveInByte(byte data, smp_struct_t* st) {
                         st->bytesToRecieve = data;
                     } else {
                         //Valid data as FRAMESTART character
-                        st->buffer.Message[st->buffer.ptr++] = data;
+                        fifo_write_char(data,st->buffer);
                         st->crc = crc16(st->crc, data, CRC_POLYNOM);
                     }
                     st->flags.recievedDelimeter = 0;
@@ -166,7 +167,7 @@ inline smp_error_t SMP_RecieveInByte(byte data, smp_struct_t* st) {
                     if (data == FRAMESTART) {
                         st->flags.recievedDelimeter = 1;
                     } else {
-                        st->buffer.Message[st->buffer.ptr++] = data;
+                        fifo_write_char(data,st->buffer);
                         st->crc = crc16(st->crc, data, CRC_POLYNOM);
                     }
                 }
@@ -178,7 +179,7 @@ inline smp_error_t SMP_RecieveInByte(byte data, smp_struct_t* st) {
                 {
                     //Data ready
                     if (FrameCallback) {
-                        return FrameCallback(st->buffer.ptr, st->buffer.Message);
+                        return FrameCallback(st->buffer);
                     }
                 } else //crc doesnt match.
                 {
@@ -241,7 +242,7 @@ smp_error_t SMP_getRecieverError(void)
     smp_error_t error;
     error.errorCode = 0;
     if(FrameCallback)
-        return FrameCallback(0,0);
+        return FrameCallback(0);
     else
         return error;
 }

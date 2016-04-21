@@ -13,7 +13,7 @@ Date: 12.9.2014
 #define MAX_FRAMESIZE MAX_PAYLOAD + 4
 #define CRC_POLYNOM 0xA001
 
-#include "../Fifo/c/stc_fifo.h"
+#include "../libfifo/c/stc_fifo.h"
 
 //Typedefinitions
 #ifndef _INTTYPES_H_
@@ -21,12 +21,6 @@ typedef unsigned char uint8_t;
 typedef signed char int8_t;
 #endif
 typedef uint8_t byte;
-
-struct smp_buffer
-{
-    unsigned char Message[MAX_PAYLOAD];
-    unsigned char ptr;
-};
 
 typedef union
 {
@@ -40,7 +34,7 @@ typedef union
 typedef struct
 {
     unsigned char bytesToRecieve;
-    struct smp_buffer buffer; //Payload
+    stc_fifo_t* buffer;
 	unsigned char crcHighByte;
 	unsigned short crc;
     struct
@@ -53,7 +47,7 @@ typedef struct
 }smp_struct_t;
 
 //Application functions
-void SMP_Init(smp_struct_t* st);
+void SMP_Init(smp_struct_t* st, stc_fifo_t* buffer);
 unsigned char SMP_Send(byte *buffer, byte length, byte* smpBuffer, byte smpBuffersize);
 /**
  * When one recievefunction returns an error, the error code should be parsed.
@@ -69,7 +63,7 @@ smp_error_t SMP_getRecieverError(void);
 //Callbacks
 //When the callbackfunction returns a negative Integer, its treated as error code.
 //When the length and the bufferpointer is both zero, then this function should return the error Code
-typedef smp_error_t (*SMPframeReady)(byte length, byte* buffer); //FrameReadyCallback: Length is the ammount of bytes in the recieveBuffer
+typedef smp_error_t (*SMPframeReady)(stc_fifo_t* data); //FrameReadyCallback: Length is the ammount of bytes in the recieveBuffer
 void SMP_RegisterFrameReadyCallback(SMPframeReady func);
 void SMP_UnregisterFrameReadyCallback(void);
 
