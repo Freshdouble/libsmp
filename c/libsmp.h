@@ -1,9 +1,9 @@
 /*****************************************************************************************************
 
-Autor: Peter Kremsner
-Date: 12.9.2014
+ Autor: Peter Kremsner
+ Date: 12.9.2014
 
-******************************************************************************************************/
+ ******************************************************************************************************/
 
 #ifndef _SMP_H__
 #define _SMP_H__
@@ -24,31 +24,32 @@ typedef uint8_t byte;
 
 typedef union
 {
-    struct
-    {
-        unsigned int bufferFull:1;
-    }flags;
-    byte errorCode;
-}smp_error_t;
+	struct
+	{
+		unsigned int bufferFull :1;
+	} flags;
+	byte errorCode;
+} smp_error_t;
 
 typedef struct
 {
-    unsigned char bytesToRecieve;
-    stc_fifo_t* buffer;
+	unsigned char bytesToRecieve;
+	fifo_t* buffer; //Buffersize must match 1 Byte (sizeof(uint8_t))
 	unsigned char crcHighByte;
 	unsigned short crc;
-    struct
-    {
-	    unsigned int recieving:1;
-	    unsigned int recievedDelimeter:1;
-	    unsigned int error:4;
-	    unsigned int status:2;
-    } flags;
-}smp_struct_t;
+	struct
+	{
+		unsigned int recieving :1;
+		unsigned int recievedDelimeter :1;
+		unsigned int error :4;
+		unsigned int status :2;
+	} flags;
+} smp_struct_t;
 
 //Application functions
-void SMP_Init(smp_struct_t* st, stc_fifo_t* buffer);
-unsigned char SMP_Send(byte *buffer, byte length, byte* smpBuffer, byte smpBuffersize);
+char SMP_Init(smp_struct_t* st, fifo_t* buffer);
+unsigned char SMP_Send(byte *buffer, byte length, byte* smpBuffer,
+		byte smpBuffersize);
 /**
  * When one recievefunction returns an error, the error code should be parsed.
  * To avoid a buffer overflow it is recomended that no data is sent to the reciever until the error is cleared.
@@ -63,7 +64,7 @@ smp_error_t SMP_getRecieverError(void);
 //Callbacks
 //When the callbackfunction returns a negative Integer, its treated as error code.
 //When the length and the bufferpointer is both zero, then this function should return the error Code
-typedef smp_error_t (*SMPframeReady)(stc_fifo_t* data); //FrameReadyCallback: Length is the ammount of bytes in the recieveBuffer
+typedef smp_error_t (*SMPframeReady)(fifo_t* data); //FrameReadyCallback: Length is the ammount of bytes in the recieveBuffer
 void SMP_RegisterFrameReadyCallback(SMPframeReady func);
 void SMP_UnregisterFrameReadyCallback(void);
 
