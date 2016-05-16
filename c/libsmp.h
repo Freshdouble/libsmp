@@ -26,6 +26,11 @@ typedef uint8_t byte;
 //When the callbackfunction returns a negative Integer, its treated as error code.
 //When the length and the bufferpointer is both zero, then this function should return the error Code
 typedef smp_error_t (*SMPframeReady)(fifo_t* data); //FrameReadyCallback: Length is the ammount of bytes in the recieveBuffer
+
+/**********
+Sends arbitrary number of bytes over interface.
+Returns the number of bytes that were sent
+*/
 typedef unsigned char (*smp_send_function)(unsigned char * buffer, int length);
 
 typedef union
