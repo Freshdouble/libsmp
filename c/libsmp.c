@@ -15,8 +15,6 @@
 #define FALSE 0
 #endif
 
-static SMPframeReady FrameCallback = 0x00;
-
 /***********************************************************************
  * Private function definiton to calculate the crc checksum
  */
@@ -38,12 +36,12 @@ unsigned int crc16(unsigned int crc, unsigned int c, unsigned int mask)
 }
 
 /************************************************************************/
-/* Initialize the smp-buffers          
+/* Initialize the smp-buffers
  * Return -1 if the datasize of the buffer is not the sizeof(uin8_t)
  * 0 otherwise
 
  /************************************************************************/
-char SMP_Init(smp_struct_t* st, fifo_t* buffer)
+char SMP_Init(smp_struct_t* st, fifo_t* buffer, smp_send_function send, SMPframeReady frameReadyCallback);
 {
 	st->buffer = buffer;
 	if (buffer->objectSize != sizeof(uint8_t))
@@ -52,74 +50,50 @@ char SMP_Init(smp_struct_t* st, fifo_t* buffer)
 	st->flags.error = 0;
 	st->crc = 0;
 	st->flags.status = 0;
+	st->send = send;
+	st->frameReadyCallback = frameReadyCallback;
 	return 0;
-}
-
-/************************************************************************/
-/* Register a function as callback if a full frame is recieved          */
-
-/************************************************************************/
-void SMP_RegisterFrameReadyCallback(SMPframeReady func)
-{
-	FrameCallback = func;
-}
-
-/************************************************************************/
-/* Unregisters the callback function                                    */
-
-/************************************************************************/
-void SMP_UnregisterFrameReadyCallback(void)
-{
-	FrameCallback = 0x00;
 }
 
 /************************************************************************/
 /* Sends data to the smp outputbuffer                                   */
 
 /************************************************************************/
-unsigned char SMP_Send(byte *buffer, byte length, byte* smpBuffer,
-		byte smpBuffersize)
+unsigned char SMP_Send(byte *buffer, byte length,smp_struct_t *st)
 {
 	unsigned short i = 2;
 	unsigned char offset = 0;
 	unsigned short crc = 0;
 
+	unsigned char message[MAX_FRAMESIZE];
+
 	if (length > MAX_PAYLOAD)
 		return 0;
 
-	if (smpBuffersize < 4)
-		return 0;
-
-	smpBuffer[0] = FRAMESTART; //Startdelimeter
+	message[0] = FRAMESTART; //Startdelimeter
 
 	for (i = 2; i < (unsigned short) (length + 2); i++)
 	{
 
-		if (smpBuffersize < i + offset + 1)
-			return 0;
-
 		if (buffer[i - 2] == FRAMESTART)
 		{
-			smpBuffer[i + offset] = FRAMESTART;
+			message[i + offset] = FRAMESTART;
 			offset++;
 			if (smpBuffersize < i + offset + 1)
 				return 0;
 		}
 
-		smpBuffer[i + offset] = buffer[i - 2];
+		message[i + offset] = buffer[i - 2];
 
 		crc = crc16(crc, buffer[i - 2], CRC_POLYNOM);
 	}
 
-	if (smpBuffersize < i + offset + 2)
-		return 0;
-
-	smpBuffer[i + offset] = crc >> 8; //CRC high byte
+	message[i + offset] = crc >> 8; //CRC high byte
 	i++;
-	smpBuffer[i + offset] = crc & 0xFF; //CRC low byte
+	message[i + offset] = crc & 0xFF; //CRC low byte
 
-	smpBuffer[1] = i + offset - 1; //calc length field
-	return i + offset + 1;
+	message[1] = i + offset - 1; //calc length field
+	return st->send(message,i + offset + 1);
 }
 
 /************************************************************************
@@ -230,10 +204,7 @@ smp_error_t SMP_RecieveInByte(byte data, smp_struct_t* st)
 			if (st->crc == ((unsigned short) (st->crcHighByte << 8) | data)) //Read the crc and compare
 			{
 				//Data ready
-				if (FrameCallback)
-				{
-					return FrameCallback(st->buffer);
-				}
+                return st->frameReadyCallback(st->buffer);
 			}
 			else //crc doesnt match.
 			{

@@ -22,6 +22,12 @@ typedef signed char int8_t;
 #endif
 typedef uint8_t byte;
 
+//Callbacks
+//When the callbackfunction returns a negative Integer, its treated as error code.
+//When the length and the bufferpointer is both zero, then this function should return the error Code
+typedef smp_error_t (*SMPframeReady)(fifo_t* data); //FrameReadyCallback: Length is the ammount of bytes in the recieveBuffer
+typedef unsigned char (*smp_send_function)(unsigned char * buffer, int length);
+
 typedef union
 {
 	struct
@@ -35,6 +41,10 @@ typedef struct
 {
 	unsigned char bytesToRecieve;
 	fifo_t* buffer; //Buffersize must match 1 Byte (sizeof(uint8_t))
+
+	smp_send_function send;
+	SMPframeReady frameReadyCallback;
+
 	unsigned char crcHighByte;
 	unsigned short crc;
 	struct
@@ -47,9 +57,8 @@ typedef struct
 } smp_struct_t;
 
 //Application functions
-char SMP_Init(smp_struct_t* st, fifo_t* buffer);
-unsigned char SMP_Send(byte *buffer, byte length, byte* smpBuffer,
-		byte smpBuffersize);
+char SMP_Init(smp_struct_t* st, fifo_t* buffer, smp_send_function send, SMPframeReady frameReadyCallback);
+unsigned char SMP_Send(byte *buffer, byte length,smp_struct_t *st);
 /**
  * When one recievefunction returns an error, the error code should be parsed.
  * To avoid a buffer overflow it is recomended that no data is sent to the reciever until the error is cleared.
@@ -60,12 +69,5 @@ smp_error_t SMP_RecieveInByte(byte data, smp_struct_t* st);
 byte SMP_GetBytesToRecieve(smp_struct_t* st);
 byte SMP_IsRecieving(smp_struct_t* st);
 smp_error_t SMP_getRecieverError(void);
-
-//Callbacks
-//When the callbackfunction returns a negative Integer, its treated as error code.
-//When the length and the bufferpointer is both zero, then this function should return the error Code
-typedef smp_error_t (*SMPframeReady)(fifo_t* data); //FrameReadyCallback: Length is the ammount of bytes in the recieveBuffer
-void SMP_RegisterFrameReadyCallback(SMPframeReady func);
-void SMP_UnregisterFrameReadyCallback(void);
 
 #endif // _SMP_H__
