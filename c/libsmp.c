@@ -41,7 +41,7 @@ unsigned int crc16(unsigned int crc, unsigned int c, unsigned int mask)
  * 0 otherwise
 
  /************************************************************************/
-char SMP_Init(smp_struct_t* st, fifo_t* buffer, smp_send_function send, SMPframeReady frameReadyCallback);
+char SMP_Init(smp_struct_t* st, fifo_t* buffer, smp_send_function send, SMPframeReady frameReadyCallback)
 {
 	st->buffer = buffer;
 	if (buffer->objectSize != sizeof(uint8_t))
