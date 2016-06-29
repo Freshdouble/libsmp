@@ -79,7 +79,7 @@ unsigned char SMP_Send(byte *buffer, byte length,smp_struct_t *st)
 		{
 			message[i + offset] = FRAMESTART;
 			offset++;
-			if (smpBuffersize < i + offset + 1)
+			if (MAX_FRAMESIZE < i + offset + 1)
 				return 0;
 		}
 
