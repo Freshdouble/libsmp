@@ -6,7 +6,7 @@
  Basic data transmission protocoll to ensure data integrity
 
  ******************************************************************************************************/
-#include "smp.h"
+#include "libsmp.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -65,14 +65,19 @@ unsigned char SMP_Send(byte *buffer, byte length,smp_struct_t *st)
 	unsigned char offset = 0;
 	unsigned short crc = 0;
 
-	unsigned char message[MAX_FRAMESIZE];
+	struct
+	{
+	    unsigned char LengthHigh;
+	    unsigned char LengthLow;
+	    unsigned char message[MAX_FRAMESIZE];
+	}message;
 
 	if (length > MAX_PAYLOAD)
 		return 0;
 
-	message[0] = FRAMESTART; //Startdelimeter
+	message.message[0] = FRAMESTART; //Startdelimeter
 
-	for (i = 2; i < (unsigned short) (length + 2); i++)
+	for (i = 5; i < (unsigned short) (length + 2); i++)
 	{
 
 		if (buffer[i - 2] == FRAMESTART)
@@ -92,7 +97,12 @@ unsigned char SMP_Send(byte *buffer, byte length,smp_struct_t *st)
 	i++;
 	message[i + offset] = crc & 0xFF; //CRC low byte
 
-	message[1] = i + offset - 1; //calc length field
+    unsigned short packageSize = i + offset - 1;
+    message[1] = packageSize >> 8;
+    if(message[1] == FRAMESTART)
+        message[2] == FRAMESTART;
+    else
+        message[2]
 	return st->send(message,i + offset + 1);
 }
 
