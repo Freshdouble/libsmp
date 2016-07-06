@@ -11,7 +11,7 @@
 #ifndef TRUE
 #define TRUE 1
 #endif
-#ifndef
+#ifndef FALSE
 #define FALSE 0
 #endif
 
@@ -20,19 +20,19 @@
  */
 unsigned int crc16(unsigned int crc, unsigned int c, unsigned int mask)
 {
-	unsigned char i;
-	unsigned int _crc = crc;
-	for (i = 0; i < 8; i++)
-	{
-		if ((_crc ^ c) & 1)
-		{
-			_crc = (_crc >> 1) ^ mask;
-		}
-		else
-			_crc >>= 1;
-		c >>= 1;
-	}
-	return (_crc);
+    unsigned char i;
+    unsigned int _crc = crc;
+    for (i = 0; i < 8; i++)
+    {
+        if ((_crc ^ c) & 1)
+        {
+            _crc = (_crc >> 1) ^ mask;
+        }
+        else
+            _crc >>= 1;
+        c >>= 1;
+    }
+    return (_crc);
 }
 
 /************************************************************************/
@@ -43,16 +43,16 @@ unsigned int crc16(unsigned int crc, unsigned int c, unsigned int mask)
  /************************************************************************/
 char SMP_Init(smp_struct_t* st, fifo_t* buffer, smp_send_function send, SMPframeReady frameReadyCallback)
 {
-	st->buffer = buffer;
-	if (buffer->objectSize != sizeof(uint8_t))
-		return -1;
-	st->flags.recieving = 0;
-	st->flags.error = 0;
-	st->crc = 0;
-	st->flags.status = 0;
-	st->send = send;
-	st->frameReadyCallback = frameReadyCallback;
-	return 0;
+    st->buffer = buffer;
+    if (buffer->objectSize != sizeof(uint8_t))
+        return -1;
+    st->flags.recieving = 0;
+    st->flags.error = 0;
+    st->crc = 0;
+    st->flags.status = 0;
+    st->send = send;
+    st->frameReadyCallback = frameReadyCallback;
+    return 0;
 }
 
 /************************************************************************/
@@ -61,49 +61,68 @@ char SMP_Init(smp_struct_t* st, fifo_t* buffer, smp_send_function send, SMPframe
 /************************************************************************/
 unsigned char SMP_Send(byte *buffer, byte length,smp_struct_t *st)
 {
-	unsigned short i = 2;
-	unsigned char offset = 0;
-	unsigned short crc = 0;
+    unsigned short i = 2;
+    unsigned char offset = 0;
+    unsigned short crc = 0;
 
-	struct
-	{
-	    unsigned char LengthHigh;
-	    unsigned char LengthLow;
-	    unsigned char message[MAX_FRAMESIZE];
-	}message;
+    if (length > MAX_PAYLOAD)
+        return 0;
 
-	if (length > MAX_PAYLOAD)
-		return 0;
+    unsigned char message1[MAX_FRAMESIZE];
+    unsigned char message2[MAX_FRAMESIZE];
 
-	message.message[0] = FRAMESTART; //Startdelimeter
+    for (i = 0; i < length; i++)
+    {
 
-	for (i = 5; i < (unsigned short) (length + 2); i++)
-	{
+        if (buffer[i] == FRAMESTART)
+        {
+            message1[i + offset] = FRAMESTART;
+            offset++;
+            if (MAX_FRAMESIZE < i + offset + 1)
+                return 0;
+        }
 
-		if (buffer[i - 2] == FRAMESTART)
-		{
-			message[i + offset] = FRAMESTART;
-			offset++;
-			if (MAX_FRAMESIZE < i + offset + 1)
-				return 0;
-		}
+        message1[i + offset] = buffer[i];
 
-		message[i + offset] = buffer[i - 2];
+        crc = crc16(crc, buffer[i], CRC_POLYNOM);
+    }
 
-		crc = crc16(crc, buffer[i - 2], CRC_POLYNOM);
-	}
-
-	message[i + offset] = crc >> 8; //CRC high byte
-	i++;
-	message[i + offset] = crc & 0xFF; //CRC low byte
+    message1[i + offset] = crc >> 8; //CRC high byte
+    if(message1[i + offset] == FRAMESTART)
+    {
+        offset++;
+        message1[i + offset] = FRAMESTART;
+    }
+    i++;
+    message1[i + offset] = crc & 0xFF; //CRC low byte
+    if(message1[i + offset] == FRAMESTART)
+    {
+        offset++;
+        message1[i + offset] = FRAMESTART;
+    }
 
     unsigned short packageSize = i + offset - 1;
-    message[1] = packageSize >> 8;
-    if(message[1] == FRAMESTART)
-        message[2] == FRAMESTART;
-    else
-        message[2]
-	return st->send(message,i + offset + 1);
+    offset = 0;
+    message2[0] = FRAMESTART;
+    message2[1] = packageSize >> 8;
+    if(message2[1] == FRAMESTART)
+    {
+        message2[2] = FRAMESTART;
+        offset = 1;
+    }
+    message2[2+offset] = packageSize && 0xFF;
+    if(message2[2+offset] == FRAMESTART)
+    {
+        message2[3+offset] = FRAMESTART;
+        offset = 2;
+    }
+
+    for(i = 3 + offset; i < packageSize + 3 + offset; i++)
+    {
+        message2[i] = message1[i - (3 + offset)];
+    }
+
+    return st->send(message2,packageSize + 3 + offset);
 }
 
 /************************************************************************
@@ -115,16 +134,125 @@ unsigned char SMP_Send(byte *buffer, byte length,smp_struct_t *st)
 
 inline smp_error_t SMP_RecieveInBytes(byte* data, byte length, smp_struct_t* st)
 {
-	int i;
-	smp_error_t error;
-	for (i = 0; i < length; i++)
-	{
-		error = SMP_RecieveInByte(data[i], st);
-		if (error.errorCode)
-			return error;
-	}
-	error.errorCode = 0;
-	return error;
+    int i;
+    smp_error_t error;
+    for (i = 0; i < length; i++)
+    {
+        error = SMP_RecieveInByte(data[i], st);
+        if (error.errorCode)
+            return error;
+    }
+    error.errorCode = 0;
+    return error;
+}
+
+smp_error_t private_SMP_RecieveInByte(byte data, smp_struct_t* st)
+{
+    switch (st->flags.status) //State machine
+    {
+    case 0:
+        break;
+    case 1:
+CASE_1_LABEL:
+        if (data == FRAMESTART)
+            break;
+        if (data > MAX_PAYLOAD + 2)
+            st->flags.status = 0; //length greater than MAX_PAYLOAD is not allowed
+        else
+        {
+            st->bytesToRecieve = data;
+            st->flags.status = 2;
+            fifo_clear(st->buffer);
+            st->crc = 0;
+            st->flags.recievedDelimeter = 0;
+        }
+        break;
+    case 2:
+        if (st->bytesToRecieve == 2)
+        {
+            st->flags.status = 3;
+        }
+        else
+        {
+            st->bytesToRecieve--;
+            if (st->flags.recievedDelimeter)
+            {
+                if (data != FRAMESTART) //Not escaped framestart handle as real Framestart
+                {
+                    st->bytesToRecieve = data;
+                }
+                else
+                {
+                    //Valid data as FRAMESTART character
+                    if (!fifo_write_object(&data, st->buffer))
+                    {
+                        //Bufferoverflow
+                        error.flags.bufferFull = 1;
+                        st->flags.status = 0;
+                        st->flags.recieving = 0;
+                    }
+                    st->crc = crc16(st->crc, data, CRC_POLYNOM);
+                }
+                st->flags.recievedDelimeter = 0;
+            }
+            else
+            {
+                if (data == FRAMESTART)
+                {
+                    st->flags.recievedDelimeter = 1;
+                }
+                else
+                {
+                    if (!fifo_write_object(&data, st->buffer))
+                    {
+                        //Bufferoverflow
+                        error.flags.bufferFull = 1;
+                        st->flags.status = 0;
+                        st->flags.recieving = 0;
+                    }
+                    st->crc = crc16(st->crc, data, CRC_POLYNOM);
+                }
+            }
+            break;
+        }
+    case 3:
+        if (!st->bytesToRecieve)
+        {
+            if (st->crc == ((unsigned short) (st->crcHighByte << 8) | data)) //Read the crc and compare
+            {
+                //Data ready
+                return st->frameReadyCallback(st->buffer);
+            }
+            else //crc doesnt match.
+            {
+                if (st->crcHighByte == FRAMESTART) //If the crc doesnt match and the high byte is the framestart delimeter
+                {
+                    //expect that this was the start of a new frame.
+                    goto CASE_1_LABEL;
+                }
+                else if (data == FRAMESTART) //Lowbyte of crc matches Framestart.
+                {
+                    st->flags.status = 1;
+                    break;
+                }
+            }
+            st->flags.status = 0;
+            st->flags.recieving = 0;
+        }
+        else
+        {
+            st->crcHighByte = data; //Save first byte of crc
+            st->bytesToRecieve = 0;
+        }
+        break;
+
+    default: //Invalid State
+        st->flags.status = 0;
+        st->bytesToRecieve = 0;
+        st->flags.recieving = 0;
+        break;
+    }
+    return error;
 }
 
 /************************************************************************/
@@ -133,118 +261,27 @@ inline smp_error_t SMP_RecieveInBytes(byte* data, byte length, smp_struct_t* st)
 /************************************************************************/
 smp_error_t SMP_RecieveInByte(byte data, smp_struct_t* st)
 {
-	smp_error_t error;
-	error.errorCode = 0;
-	switch (st->flags.status)
-	//State machine
-	{
-	case 0:
-		//Detect Framestart
-		if (data == FRAMESTART)
-		{
-			st->flags.status = 1;
-			st->flags.recieving = TRUE;
-		}
-		break;
-	case 1:
-		CASE_1_LABEL: if (data == FRAMESTART)
-			break;
-		if (data > MAX_PAYLOAD + 2)
-			st->flags.status = 0; //length greater than MAX_PAYLOAD is not allowed
-		else
-		{
-			st->bytesToRecieve = data;
-			st->flags.status = 2;
-			fifo_clear(st->buffer);
-			st->crc = 0;
-			st->flags.recievedDelimeter = 0;
-		}
-		break;
-	case 2:
-		if (st->bytesToRecieve == 2)
-		{
-			st->flags.status = 3;
-		}
-		else
-		{
-			st->bytesToRecieve--;
-			if (st->flags.recievedDelimeter)
-			{
-				if (data != FRAMESTART) //Not escaped framestart handle as real Framestart
-				{
-					st->bytesToRecieve = data;
-				}
-				else
-				{
-					//Valid data as FRAMESTART character
-					if (!fifo_write_object(&data, st->buffer))
-					{
-						//Bufferoverflow
-						error.flags.bufferFull = 1;
-						st->flags.status = 0;
-						st->flags.recieving = 0;
-					}
-					st->crc = crc16(st->crc, data, CRC_POLYNOM);
-				}
-				st->flags.recievedDelimeter = 0;
-			}
-			else
-			{
-				if (data == FRAMESTART)
-				{
-					st->flags.recievedDelimeter = 1;
-				}
-				else
-				{
-					if (!fifo_write_object(&data, st->buffer))
-					{
-						//Bufferoverflow
-						error.flags.bufferFull = 1;
-						st->flags.status = 0;
-						st->flags.recieving = 0;
-					}
-					st->crc = crc16(st->crc, data, CRC_POLYNOM);
-				}
-			}
-			break;
-		}
-	case 3:
-		if (!st->bytesToRecieve)
-		{
-			if (st->crc == ((unsigned short) (st->crcHighByte << 8) | data)) //Read the crc and compare
-			{
-				//Data ready
-                return st->frameReadyCallback(st->buffer);
-			}
-			else //crc doesnt match.
-			{
-				if (st->crcHighByte == FRAMESTART) //If the crc doesnt match and the high byte is the framestart delimeter
-				{ //expect that this was the start of a new frame.
-					goto CASE_1_LABEL;
-				}
-				else if (data == FRAMESTART) //Lowbyte of crc matches Framestart.
-				{
-					st->flags.status = 1;
-					break;
-				}
-			}
-			st->flags.status = 0;
-			st->flags.recieving = 0;
-		}
-		else
-		{
-			st->crcHighByte = data; //Save first byte of crc
-			st->bytesToRecieve = 0;
-		}
-		break;
+    smp_error_t error;
+    error.errorCode = 0;
 
-	default: //Invalid State
-		st->flags.status = 0;
-		st->bytesToRecieve = 0;
-		st->flags.recieving = 0;
-		break;
-	}
-	return error;
+    if(data == FRAMESTART)
+    {
+        if(st->flags.recievedDelimeter)
+        {
+            st->flags.recievedDelimeter = 0;
+            return private_SMP_RecieveInByte(data,st);
+        }
+        else
+            st->flags.recievedDelimeter = 1;
+    }
+    else
+    {
+        if(st->flags.recievedDelimeter)
+        {
+            st->flags.status = 1;
+        }
+        return private_SMP_RecieveInByte(data,st);
+    }
 }
 
 /**********************************************************************
@@ -255,10 +292,10 @@ smp_error_t SMP_RecieveInByte(byte data, smp_struct_t* st)
  **********************************************************************/
 byte SMP_GetBytesToRecieve(smp_struct_t* st)
 {
-	if (st->flags.recieving)
-		return st->bytesToRecieve;
-	else
-		return 0;
+    if (st->flags.recieving)
+        return st->bytesToRecieve;
+    else
+        return 0;
 }
 
 /**
@@ -268,7 +305,7 @@ byte SMP_GetBytesToRecieve(smp_struct_t* st)
  */
 byte SMP_IsRecieving(smp_struct_t* st)
 {
-	return st->flags.recieving;
+    return st->flags.recieving;
 }
 
 /**
@@ -277,10 +314,10 @@ byte SMP_IsRecieving(smp_struct_t* st)
  */
 smp_error_t SMP_getRecieverError(void)
 {
-	smp_error_t error;
-	error.errorCode = 0;
-	if (FrameCallback)
-		return FrameCallback(0);
-	else
-		return error;
+    smp_error_t error;
+    error.errorCode = 0;
+    if (FrameCallback)
+        return FrameCallback(0);
+    else
+        return error;
 }

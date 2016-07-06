@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1467833906 source:c:\users\local\documents\libsmp\libfifo\c\libfifo.c
+	"libfifo.h"
+	"math.h"
+
+1467833906 c:\users\local\documents\libsmp\libfifo\c\libfifo.h
+	<stdint.h>
+

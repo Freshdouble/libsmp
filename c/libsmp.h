@@ -13,7 +13,7 @@
 #define MAX_FRAMESIZE MAX_PAYLOAD + 4
 #define CRC_POLYNOM 0xA001
 
-#include "../libfifo/c/stc_fifo.h"
+#include "../libfifo/c/libfifo.h"
 
 //Typedefinitions
 #ifndef _INTTYPES_H_
@@ -21,6 +21,15 @@ typedef unsigned char uint8_t;
 typedef signed char int8_t;
 #endif
 typedef uint8_t byte;
+
+typedef union
+{
+	struct
+	{
+		unsigned int bufferFull :1;
+	} flags;
+	byte errorCode;
+} smp_error_t;
 
 //Callbacks
 //When the callbackfunction returns a negative Integer, its treated as error code.
@@ -32,15 +41,6 @@ Sends arbitrary number of bytes over interface.
 Returns the number of bytes that were sent
 */
 typedef unsigned char (*smp_send_function)(unsigned char * buffer, int length);
-
-typedef union
-{
-	struct
-	{
-		unsigned int bufferFull :1;
-	} flags;
-	byte errorCode;
-} smp_error_t;
 
 typedef struct
 {
