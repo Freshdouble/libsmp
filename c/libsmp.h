@@ -9,8 +9,6 @@
 #define _SMP_H__
 
 #define FRAMESTART 0xFF									// The framestartdelimeter														// if outputbuffering is disabled you can only read the incoming date with the FrameReadyCallback
-#define MAX_PAYLOAD 30			// The maximum size of the payload in one Frame
-#define MAX_FRAMESIZE MAX_PAYLOAD + 4
 #define CRC_POLYNOM 0xA001
 
 #include "../libfifo/c/libfifo.h"
@@ -22,33 +20,25 @@ typedef signed char int8_t;
 #endif
 typedef uint8_t byte;
 
-typedef union
-{
-	struct
-	{
-		unsigned int bufferFull :1;
-	} flags;
-	byte errorCode;
-} smp_error_t;
-
 //Callbacks
 //When the callbackfunction returns a negative Integer, its treated as error code.
 //When the length and the bufferpointer is both zero, then this function should return the error Code
-typedef smp_error_t (*SMPframeReady)(fifo_t* data); //FrameReadyCallback: Length is the ammount of bytes in the recieveBuffer
+typedef signed char (*SMP_Frame_Ready)(fifo_t* data); //FrameReadyCallback: Length is the ammount of bytes in the recieveBuffer
 
 /**********
 Sends arbitrary number of bytes over interface.
 Returns the number of bytes that were sent
 */
-typedef unsigned char (*smp_send_function)(unsigned char * buffer, int length);
+typedef unsigned char (*SMP_send_function)(unsigned char * buffer, unsigned int length);
 
 typedef struct
 {
-	unsigned char bytesToRecieve;
+	unsigned short bytesToRecieve;
 	fifo_t* buffer; //Buffersize must match 1 Byte (sizeof(uint8_t))
 
-	smp_send_function send;
-	SMPframeReady frameReadyCallback;
+	SMP_send_function send;
+	SMP_Frame_Ready frameReadyCallback;
+	SMP_Frame_Ready rogueFrameCallback;
 
 	unsigned char crcHighByte;
 	unsigned short crc;
@@ -62,17 +52,17 @@ typedef struct
 } smp_struct_t;
 
 //Application functions
-char SMP_Init(smp_struct_t* st, fifo_t* buffer, smp_send_function send, SMPframeReady frameReadyCallback);
-unsigned char SMP_Send(byte *buffer, byte length,smp_struct_t *st);
+signed char SMP_Init(smp_struct_t* st, fifo_t* buffer, SMP_send_function send, SMP_Frame_Ready frameReadyCallback, SMP_Frame_Ready rogueFrameCallback);
+unsigned char SMP_Send(byte *buffer, unsigned short length,smp_struct_t *st);
 /**
  * When one recievefunction returns an error, the error code should be parsed.
  * To avoid a buffer overflow it is recomended that no data is sent to the reciever until the error is cleared.
  * If an error is returned it is not sure that the data recieved the reciever.
  */
-smp_error_t SMP_RecieveInBytes(byte* data, byte length, smp_struct_t* st);
-smp_error_t SMP_RecieveInByte(byte data, smp_struct_t* st);
+signed char SMP_RecieveInBytes(byte* data, unsigned int length, smp_struct_t* st);
+signed char SMP_RecieveInByte(byte data, smp_struct_t* st);
 byte SMP_GetBytesToRecieve(smp_struct_t* st);
 byte SMP_IsRecieving(smp_struct_t* st);
-smp_error_t SMP_getRecieverError(void);
+signed char SMP_getRecieverError(void);
 
 #endif // _SMP_H__
