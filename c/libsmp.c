@@ -100,7 +100,7 @@ unsigned char SMP_Send(byte *buffer, unsigned short length,smp_struct_t *st)
         offset++;
         message1[i + offset + 1] = FRAMESTART;
     }
-    unsigned int packageSize = i + 2;
+    unsigned int packageSize = length + 2;
     unsigned int completeFramesize = packageSize + offset;
     offset = 0;
     message2[0] = FRAMESTART;
