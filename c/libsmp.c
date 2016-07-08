@@ -189,6 +189,8 @@ signed char private_SMP_RecieveInByte(byte data, smp_struct_t* st)
     case 3:
         if (!st->bytesToRecieve)
         {
+            st->flags.status = 0;
+            st->flags.recieving = 0;
             if (st->crc == ((unsigned short) (st->crcHighByte << 8) | data)) //Read the crc and compare
             {
                 //Data ready
@@ -202,8 +204,6 @@ signed char private_SMP_RecieveInByte(byte data, smp_struct_t* st)
                 if(st->rogueFrameCallback)
                     return st->rogueFrameCallback(st->buffer);
             }
-            st->flags.status = 0;
-            st->flags.recieving = 0;
         }
         else
         {
