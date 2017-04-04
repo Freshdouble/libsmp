@@ -8,10 +8,23 @@
 #ifndef _SMP_H__
 #define _SMP_H__
 
-#define FRAMESTART 0xFF									// The framestartdelimeter														// if outputbuffering is disabled you can only read the incoming date with the FrameReadyCallback
-#define CRC_POLYNOM 0xA001
+#define FRAMESTART 0xFF	    // The framestartdelimeter
+#define CRC_POLYNOM 0xA001 //CRC Generatorpolynom
+//Add USE_RS_CODE preprocessor constant to enable RS_Encoding
 
-#include "../libfifo/c/libfifo.h"
+#ifdef USE_RS_CODE
+#define Blocksize 16UL //define size of one Block, must be smaler than 255
+#if Blocksize > 255
+#error "Maximum Blocksize exeded, use a value smaler than 255"
+#endif // Blocksize
+#define BlockData (Blocksize - NPAR)
+#endif // USE_RS_CODE
+
+#include "libfifo.h"
+
+#ifdef USE_RS_CODE
+#include "ecc.h"
+#endif // USE_RS_CODE
 
 //Typedefinitions
 #ifndef _INTTYPES_H_
@@ -46,13 +59,20 @@ typedef struct
 	{
 		unsigned int recieving :1;
 		unsigned int recievedDelimeter :1;
-		unsigned int error :4;
 		unsigned int status :2;
+		unsigned int noCRC :1;
 	} flags;
+
+	#ifdef USE_RS_CODE
+	unsigned char rsBuffer[Blocksize];
+	unsigned short rsPtr;
+	ecc_t* ecc;
+	#endif // USE_RS_CODE
 } smp_struct_t;
 
 //Application functions
-signed char SMP_Init(smp_struct_t* st, fifo_t* buffer, SMP_send_function send, SMP_Frame_Ready frameReadyCallback, SMP_Frame_Ready rogueFrameCallback);
+signed char SMP_Init(smp_struct_t* st);
+unsigned int SMP_estimatePacketLength(byte* buffer, unsigned short length, smp_struct_t *st);
 unsigned char SMP_Send(byte *buffer, unsigned short length,smp_struct_t *st);
 /**
  * When one recievefunction returns an error, the error code should be parsed.
