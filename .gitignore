@@ -1,3 +1,7 @@
 *.cbp
 c/libsmp/main.c
 c/libsmp/libsmp.layout
+*.o
+*.a
+*.def
+*.dll

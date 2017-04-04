@@ -1,0 +1,44 @@
+# depslib dependency file v1.0
+1491308566 source:c:\users\local\documents\libfifo\c\libfifo.c
+	"libfifo.h"
+	"math.h"
+
+1491320008 c:\users\local\documents\libfifo\c\libfifo.h
+	<stdint.h>
+	<string.h>
+
+1484839843 source:c:\users\local\documents\libsmp\c\berlekamp.c
+	<stdio.h>
+	"ecc.h"
+
+1491319912 c:\users\local\documents\libsmp\c\ecc.h
+	<inttypes.h>
+
+1484832427 source:c:\users\local\documents\libsmp\c\crcgen.c
+	"ecc.h"
+
+1484832427 source:c:\users\local\documents\libsmp\c\galois.c
+	<stdio.h>
+	<stdlib.h>
+	"ecc.h"
+
+1491309188 source:c:\users\local\documents\libsmp\c\libsmp.c
+	"libsmp.h"
+	<stdio.h>
+
+1491320266 c:\users\local\documents\libsmp\c\libsmp.h
+	"../../libfifo/c/libfifo.h"
+	"ecc.h"
+
+1484839843 source:c:\users\local\documents\libsmp\c\rs.c
+	<stdio.h>
+	<ctype.h>
+	"ecc.h"
+
+1491320266 source:c:\users\local\documents\libsmp\dll\main.cpp
+	"main.h"
+	"../c/libsmp.h"
+
+1446671344 c:\users\local\documents\libsmp\dll\main.h
+	<windows.h>
+
