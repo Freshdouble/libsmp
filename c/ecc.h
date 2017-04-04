@@ -27,6 +27,11 @@
  #ifndef ECC_H__
  #define ECC_H__
 
+ #ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /****************************************************************
 
   Below is NPAR, the only compile-time parameter you should have to
@@ -117,4 +122,8 @@ void mult_polys(int dst[], int p1[], int p2[], ecc_t* ecc);
 
 void copy_poly(int dst[], int src[]);
 void zero_poly(int poly[]);
+
+ #ifdef __cplusplus
+}
+#endif
  #endif // ECC_H__

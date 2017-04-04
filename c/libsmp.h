@@ -8,6 +8,11 @@
 #ifndef _SMP_H__
 #define _SMP_H__
 
+ #ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define FRAMESTART 0xFF	    // The framestartdelimeter
 #define CRC_POLYNOM 0xA001 //CRC Generatorpolynom
 //Add USE_RS_CODE preprocessor constant to enable RS_Encoding
@@ -84,5 +89,9 @@ signed char SMP_RecieveInByte(byte data, smp_struct_t* st);
 byte SMP_GetBytesToRecieve(smp_struct_t* st);
 byte SMP_IsRecieving(smp_struct_t* st);
 signed char SMP_getRecieverError(void);
+
+ #ifdef __cplusplus
+}
+#endif
 
 #endif // _SMP_H__
