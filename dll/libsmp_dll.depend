@@ -26,8 +26,8 @@
 	"libsmp.h"
 	<stdio.h>
 
-1491320266 c:\users\local\documents\libsmp\c\libsmp.h
-	"../../libfifo/c/libfifo.h"
+1491320558 c:\users\local\documents\libsmp\c\libsmp.h
+	"libfifo.h"
 	"ecc.h"
 
 1484839843 source:c:\users\local\documents\libsmp\c\rs.c
@@ -35,10 +35,15 @@
 	<ctype.h>
 	"ecc.h"
 
-1491320266 source:c:\users\local\documents\libsmp\dll\main.cpp
+1491336358 source:c:\users\local\documents\libsmp\dll\main.cpp
 	"main.h"
 	"../c/libsmp.h"
+	<string.h>
+	<inttypes.h>
+	<vector>
+	<new>
 
-1446671344 c:\users\local\documents\libsmp\dll\main.h
+1491335726 c:\users\local\documents\libsmp\dll\main.h
 	<windows.h>
+	<inttypes.h>
 
