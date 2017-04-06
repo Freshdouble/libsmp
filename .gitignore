@@ -5,3 +5,5 @@ c/libsmp/libsmp.layout
 *.a
 *.def
 *.dll
+dll/bin/
+dll/obj/
