@@ -57,7 +57,7 @@ extern "C" unsigned char sendCallback(unsigned char * buffer, unsigned int lengt
     return length;
 }
 
-extern "C" DLL_EXPORT void libsmp_addReceivedBytes(uint8_t* bytes, uint32_t length)
+extern "C" DLL_EXPORT void libsmp_addReceivedBytes(const uint8_t* bytes, uint32_t length)
 {
     SMP_RecieveInBytes(bytes,length,&smp);
 }
@@ -85,6 +85,14 @@ extern "C" DLL_EXPORT size_t libsmp_getMessagesToSend()
     return sendBuffer.size();
 }
 
+extern "C" DLL_EXPORT uint16_t libsmp_getNextMessageLength()
+{
+    if(sendBuffer.empty())
+        return 0;
+    message_t msg = sendBuffer.back();
+    return msg.size;
+}
+
 extern "C" DLL_EXPORT uint8_t libsmp_getMessage(message_t* msg)
 {
     if(!sendBuffer.empty())
@@ -98,7 +106,7 @@ extern "C" DLL_EXPORT uint8_t libsmp_getMessage(message_t* msg)
     return 0;
 }
 
-extern "C" DLL_EXPORT uint32_t libsmp_sendBytes(uint8_t* bytes, uint32_t length)
+extern "C" DLL_EXPORT uint32_t libsmp_sendBytes(const uint8_t* bytes, uint32_t length)
 {
     return SMP_Send(bytes,length,&smp);
 }
