@@ -77,15 +77,15 @@ typedef struct
 
 //Application functions
 signed char SMP_Init(smp_struct_t* st);
-unsigned int SMP_estimatePacketLength(byte* buffer, unsigned short length, smp_struct_t *st);
-unsigned char SMP_Send(byte *buffer, unsigned short length,smp_struct_t *st);
+unsigned int SMP_estimatePacketLength(const byte* buffer, unsigned short length, smp_struct_t *st);
+unsigned char SMP_Send(const byte *buffer, unsigned short length,smp_struct_t *st);
 /**
  * When one recievefunction returns an error, the error code should be parsed.
  * To avoid a buffer overflow it is recomended that no data is sent to the reciever until the error is cleared.
  * If an error is returned it is not sure that the data recieved the reciever.
  */
-signed char SMP_RecieveInBytes(byte* data, unsigned int length, smp_struct_t* st);
-signed char SMP_RecieveInByte(byte data, smp_struct_t* st);
+signed char SMP_RecieveInBytes(const byte* data, unsigned int length, smp_struct_t* st);
+signed char SMP_RecieveInByte(const byte data, smp_struct_t* st);
 byte SMP_GetBytesToRecieve(smp_struct_t* st);
 byte SMP_IsRecieving(smp_struct_t* st);
 signed char SMP_getRecieverError(void);

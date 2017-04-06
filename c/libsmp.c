@@ -69,15 +69,15 @@ signed char SMP_Init(smp_struct_t* st)
 
 /************************************************************************
  * @brief Estimate the number of bytes in the full smp packet.
- * 
+ *
  * Since this function is faster than the calculation of the smp packet itself
  * one could check if the sendfunction is able to send all data and if it's not
  * avoid packet creation, especialy when using reed solomon codes
- * 
+ *
  * @return estimated size of the smp packet
  ************************************************************************/
 
-unsigned int SMP_estimatePacketLength(byte* buffer, unsigned short length, smp_struct_t *st)
+unsigned int SMP_estimatePacketLength(const byte* buffer, unsigned short length, smp_struct_t *st)
 {
 	unsigned short overheadCounter = 0;
 	unsigned int ret = 0;
@@ -103,7 +103,7 @@ unsigned int SMP_estimatePacketLength(byte* buffer, unsigned short length, smp_s
 /* Sends data to the smp outputbuffer                                   */
 
 /************************************************************************/
-unsigned char SMP_Send(byte *buffer, unsigned short length, smp_struct_t *st)
+unsigned char SMP_Send(const byte *buffer, unsigned short length, smp_struct_t *st)
 {
 	unsigned int i = 2;
 	unsigned int offset = 0;
@@ -140,7 +140,7 @@ unsigned char SMP_Send(byte *buffer, unsigned short length, smp_struct_t *st)
 		offset++;
 		message1[i + offset + 1] = FRAMESTART;
 	}
-	
+
 	unsigned int packageSize = length + 2;
 	unsigned int completeFramesize = packageSize + offset;
 	offset = 0;
@@ -222,7 +222,7 @@ unsigned char SMP_Send(byte *buffer, unsigned short length, smp_struct_t *st)
 
  ************************************************************************/
 
-inline signed char SMP_RecieveInBytes(byte* data, unsigned int length, smp_struct_t* st)
+inline signed char SMP_RecieveInBytes(const byte* data, unsigned int length, smp_struct_t* st)
 {
 	unsigned int i;
 	signed char ret = 0;
