@@ -67,17 +67,17 @@ extern "C" DLL_EXPORT size_t libsmp_bytesMessagesToReceive()
     return receiveBuffer.size();
 }
 
-extern "C" DLL_EXPORT message_t libsmp_getReceivedMessage()
+extern "C" DLL_EXPORT uint8_t libsmp_getReceivedMessage(message_t* msg)
 {
-    message_t msg;
     if(!receiveBuffer.empty())
     {
-        msg = receiveBuffer.back();
+        *msg = receiveBuffer.back();
         receiveBuffer.pop_back();
+        return 1;
     }
     else
-        msg.size = 0;
-    return msg;
+        msg->size = 0;
+    return 0;
 }
 
 extern "C" DLL_EXPORT size_t libsmp_getMessagesToSend()
@@ -85,17 +85,17 @@ extern "C" DLL_EXPORT size_t libsmp_getMessagesToSend()
     return sendBuffer.size();
 }
 
-extern "C" DLL_EXPORT message_t libsmp_getMessage()
+extern "C" DLL_EXPORT uint8_t libsmp_getMessage(message_t* msg)
 {
-    message_t msg;
     if(!sendBuffer.empty())
     {
-        msg = sendBuffer.back();
+        *msg = sendBuffer.back();
         sendBuffer.pop_back();
+        return 1;
     }
     else
-        msg.size = 0;
-    return msg;
+        msg->size = 0;
+    return 0;
 }
 
 extern "C" DLL_EXPORT uint32_t libsmp_sendBytes(uint8_t* bytes, uint32_t length)

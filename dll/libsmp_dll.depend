@@ -35,7 +35,7 @@
 	<ctype.h>
 	"ecc.h"
 
-1491336358 source:c:\users\local\documents\libsmp\dll\main.cpp
+1491384341 source:c:\users\local\documents\libsmp\dll\main.cpp
 	"main.h"
 	"../c/libsmp.h"
 	<string.h>
@@ -43,7 +43,7 @@
 	<vector>
 	<new>
 
-1491335726 c:\users\local\documents\libsmp\dll\main.h
+1491384341 c:\users\local\documents\libsmp\dll\main.h
 	<windows.h>
 	<inttypes.h>
 
