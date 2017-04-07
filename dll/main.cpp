@@ -8,7 +8,7 @@
 using namespace std;
 
 static smp_struct_t smp;
-static uint8_t messageBuffer[GET_BUFFER_SIZE(65536)];
+static uint8_t messageBuffer[GET_BUFFER_SIZE(65000)];
 static fifo_t fifo;
 #ifdef USE_RS_CODE
 static ecc_t ecc;
@@ -19,15 +19,8 @@ static vector<message_t> sendBuffer;
 
 extern "C" signed char frameReady(fifo_t *buffer)
 {
-    uint8_t data;
-    uint32_t i = 0;
     message_t msg;
-    while(fifo_read_byte(&data,buffer))
-    {
-        msg.message[i] = data;
-        i++;
-    }
-    msg.size = i;
+    msg.size = fifo_read_bytes(msg.message,buffer,65536);
     try
     {
         receiveBuffer.push_back(msg);
@@ -65,6 +58,14 @@ extern "C" DLL_EXPORT void libsmp_addReceivedBytes(const uint8_t* bytes, uint32_
 extern "C" DLL_EXPORT size_t libsmp_bytesMessagesToReceive()
 {
     return receiveBuffer.size();
+}
+
+extern "C" DLL_EXPORT uint16_t libsmp_getNextReceivedMessageLength()
+{
+    if(receiveBuffer.empty())
+        return 0;
+    message_t msg = receiveBuffer.back();
+    return msg.size;
 }
 
 extern "C" DLL_EXPORT uint8_t libsmp_getReceivedMessage(message_t* msg)
@@ -118,6 +119,7 @@ extern "C" DLL_EXPORT void libsmp_useRS(BOOL rs)
     smp.frameReadyCallback = frameReady;
     smp.send = sendCallback;
     smp.rogueFrameCallback = 0;
+    #ifdef USE_RS_CODE
     if(rs)
     {
         smp.ecc = &ecc;
@@ -126,6 +128,7 @@ extern "C" DLL_EXPORT void libsmp_useRS(BOOL rs)
     {
         smp.ecc = 0;
     }
+    #endif
     SMP_Init(&smp);
 }
 

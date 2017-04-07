@@ -22,11 +22,11 @@
 	<stdlib.h>
 	"ecc.h"
 
-1491309188 source:c:\users\local\documents\libsmp\c\libsmp.c
+1491562348 source:c:\users\local\documents\libsmp\c\libsmp.c
 	"libsmp.h"
 	<stdio.h>
 
-1491320558 c:\users\local\documents\libsmp\c\libsmp.h
+1491475927 c:\users\local\documents\libsmp\c\libsmp.h
 	"libfifo.h"
 	"ecc.h"
 
@@ -35,7 +35,7 @@
 	<ctype.h>
 	"ecc.h"
 
-1491384341 source:c:\users\local\documents\libsmp\dll\main.cpp
+1491560827 source:c:\users\local\documents\libsmp\dll\main.cpp
 	"main.h"
 	"../c/libsmp.h"
 	<string.h>
@@ -43,7 +43,7 @@
 	<vector>
 	<new>
 
-1491384341 c:\users\local\documents\libsmp\dll\main.h
+1491484717 c:\users\local\documents\libsmp\dll\main.h
 	<windows.h>
 	<inttypes.h>
 

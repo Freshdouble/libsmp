@@ -3,7 +3,7 @@
 
 #include "libsmp.h"
 
-#define MESSAGE_SIZE 25000
+#define MESSAGE_SIZE 50
 
 #define BUFFER_SIZE 60000
 
@@ -29,7 +29,7 @@ signed char smp1_recieve(fifo_t *buffer)
     unsigned char message[MESSAGE_SIZE];
     int i;
 
-    i = fifo_read(message,MESSAGE_SIZE,buffer);
+    i = fifo_read_bytes(message,buffer,MESSAGE_SIZE);
 
     return 0;
 }
@@ -47,7 +47,7 @@ signed char smp2_recieve(fifo_t *buffer)
     int i;
     int d;
 
-    i = fifo_read(message,MESSAGE_SIZE,buffer);
+    i = fifo_read_bytes(message,buffer,MESSAGE_SIZE);
 
     for(d = 0; d < i; d++)
     {
@@ -63,11 +63,21 @@ signed char smp2_recieve(fifo_t *buffer)
 
 int main()
 {
-    fifo_init(&fifo1,buffer1,BUFFER_SIZE,1);
-    fifo_init(&fifo2,buffer2,BUFFER_SIZE,1);
+    fifo_init(&fifo1,buffer1,BUFFER_SIZE);
+    fifo_init(&fifo2,buffer2,BUFFER_SIZE);
 
-    SMP_Init(&smp1,&fifo1,smp1_send,smp1_recieve,0);
-    SMP_Init(&smp2,&fifo2,smp2_send,smp2_recieve,0);
+    smp1.buffer = &fifo1;
+    smp1.send = smp1_send;
+    smp1.frameReadyCallback = smp1_recieve;
+    smp1.rogueFrameCallback = 0;
+
+    smp2.buffer = &fifo2;
+    smp2.send = smp2_send;
+    smp2.frameReadyCallback = smp2_recieve;
+    smp2.rogueFrameCallback = 0;
+
+    SMP_Init(&smp1);
+    SMP_Init(&smp2);
 
     int i;
     for(i = 0; i < MESSAGE_SIZE; i++)
