@@ -1,9 +1,8 @@
-*.cbp
 c/libsmp/main.c
 c/libsmp/libsmp.layout
-*.o
-*.a
-*.def
-*.dll
 dll/bin/
 dll/obj/
+test/libsmpTest/bin/
+test/libsmpTest/obj/
+dll/libsmpTest/bin/
+dll/libsmpTest/obj/
