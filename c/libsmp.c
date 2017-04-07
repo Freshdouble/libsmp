@@ -183,7 +183,7 @@ unsigned char SMP_Send(const byte *buffer, unsigned short length, smp_struct_t *
 		{
 			if ((unsigned int) (messageSize - ptr + 1) >= BlockData)
 			{
-				MEMCPYFUNCTION(&message2[ptr], CurrentBlock, BlockData);
+				MEMCPYFUNCTION(CurrentBlock, &message2[ptr], BlockData);
 				ptr += BlockData;
 			}
 			else
@@ -191,7 +191,7 @@ unsigned char SMP_Send(const byte *buffer, unsigned short length, smp_struct_t *
 				const unsigned char zeroes[BlockData] =
 				{ 0 };
 				MEMCPYFUNCTION(CurrentBlock, zeroes, BlockData);
-				MEMCPYFUNCTION(&message2[ptr], CurrentBlock, messageSize - ptr + 1);
+				MEMCPYFUNCTION(CurrentBlock, &message2[ptr], messageSize - ptr + 1);
 				ptr = messageSize;
 			}
 			encode_data(CurrentBlock, BlockData, &newBuffer[newPtr], st->ecc);
@@ -263,7 +263,7 @@ signed char private_SMP_RecieveInByte(byte data, smp_struct_t* st)
 			else
 			{
 				st->bytesToRecieve--;
-				if (!fifo_write_bytes(&data, st->buffer,1))
+				if (!fifo_write_byte(data, st->buffer))
 				{
 					//Bufferoverflow
 					st->flags.status = 0;
