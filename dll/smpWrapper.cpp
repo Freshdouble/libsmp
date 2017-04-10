@@ -8,7 +8,7 @@ extern "C" signed char frameReady(fifo_t *buffer)
     message_t msg;
     if(currentReceive == 0)
     	return -1;
-    msg.size = fifo_read_bytes(msg.message,buffer,messageBufferSíze - 1);
+    msg.size = fifo_read_bytes(msg.message,buffer,MESSAGE_BUFFER_SIZE - 1);
     try
     {
     	currentReceive->push_back(msg);
@@ -44,7 +44,7 @@ SMP::SMP(bool useRS)
 {
 	currentReceive = 0;
 	currentSend = 0;
-	fifo_init(&this->fifo,this->messageBuffer, messageBufferSíze);
+	fifo_init(&this->fifo,this->messageBuffer, MESSAGE_BUFFER_SIZE);
 	this->smp.buffer = &this->fifo;
 	this->smp.send = sendCallback;
 	this->smp.frameReadyCallback = frameReady;
@@ -52,10 +52,10 @@ SMP::SMP(bool useRS)
     #ifdef USE_RS_CODE
     if(useRS)
     {
-        this.smp.ecc = this.ecc;
+        this->smp.ecc = &this->ecc;
     }
     else
-        this.smp.ecc = 0;
+        this->smp.ecc = 0;
     #endif
     SMP_Init(&this->smp);
 }
@@ -100,4 +100,56 @@ byte SMP::getBytesToRecieve()
 bool SMP::isRecieving()
 {
     return SMP_IsRecieving(&this->smp) != 0;
+}
+
+size_t SMP::MessagesToReceive()
+{
+    return this->receiveBuffer.size();
+}
+
+uint16_t SMP::getNextReceivedMessageLength()
+{
+    if(this->receiveBuffer.empty())
+        return 0;
+    message_t msg = this->receiveBuffer.back();
+    return msg.size;
+}
+
+uint8_t SMP::getReceivedMessage(message_t* msg)
+{
+    if(!this->receiveBuffer.empty())
+    {
+        *msg = this->receiveBuffer.back();
+        this->receiveBuffer.pop_back();
+        return 1;
+    }
+    else
+        msg->size = 0;
+    return 0;
+}
+
+size_t SMP::getMessagesToSend()
+{
+    return this->sendBuffer.size();
+}
+
+uint16_t SMP::getNextMessageLength()
+{
+    if(this->sendBuffer.empty())
+        return 0;
+    message_t msg = this->sendBuffer.back();
+    return msg.size;
+}
+
+uint8_t SMP::getMessage(message_t* msg)
+{
+    if(!this->sendBuffer.empty())
+    {
+        *msg = this->sendBuffer.back();
+        this->sendBuffer.pop_back();
+        return 1;
+    }
+    else
+        msg->size = 0;
+    return 0;
 }

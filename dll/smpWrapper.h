@@ -1,7 +1,10 @@
 #include "../c/libsmp.h"
+#include "main.h"
 #include <vector>
 
-#define messageBufferSíze GET_BUFFER_SIZE(65000)
+#define MESSAGE_BUFFER_SIZE GET_BUFFER_SIZE(65000)
+
+using namespace std;
 
 class SMP
 {
@@ -13,13 +16,19 @@ public:
     signed char recieveInByte(const byte data);
     byte getBytesToRecieve();
     bool isRecieving();
+
     size_t MessagesToReceive();
     uint16_t getNextReceivedMessageLength();
+    uint8_t getReceivedMessage(message_t* msg);
+
+    size_t getMessagesToSend();
+    uint16_t getNextMessageLength();
+    uint8_t getMessage(message_t* msg);
 private:
     smp_struct_t smp;
     vector<message_t> receiveBuffer;
     vector<message_t> sendBuffer;
-    uint8_t messageBuffer[messageBufferSíze];
+    uint8_t messageBuffer[MESSAGE_BUFFER_SIZE];
     fifo_t fifo;
     #ifdef USE_RS_CODE
     ecc_t ecc;

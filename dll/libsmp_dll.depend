@@ -35,15 +35,22 @@
 	<ctype.h>
 	"ecc.h"
 
-1491560827 source:c:\users\local\documents\libsmp\dll\main.cpp
+1491868722 source:c:\users\local\documents\libsmp\dll\main.cpp
 	"main.h"
 	"../c/libsmp.h"
 	<string.h>
 	<inttypes.h>
 	<vector>
 	<new>
+	"smpWrapper.h"
+	<algorithm>
 
-1491484717 c:\users\local\documents\libsmp\dll\main.h
+1491856415 c:\users\local\documents\libsmp\dll\main.h
 	<windows.h>
 	<inttypes.h>
+
+1491868451 c:\users\local\documents\libsmp\dll\smpwrapper.h
+	"../c/libsmp.h"
+	"main.h"
+	<vector>
 

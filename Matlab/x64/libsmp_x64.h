@@ -27,15 +27,16 @@ typedef struct
     uint32_t size;
 }message_t;
 
-DLL_EXPORT void libsmp_addReceivedBytes(const uint8_t* bytes, uint32_t length);
-DLL_EXPORT size_t libsmp_bytesMessagesToReceive();
-DLL_EXPORT uint16_t libsmp_getNextReceivedMessageLength();
-DLL_EXPORT uint8_t libsmp_getReceivedMessage(message_t* msg);
-DLL_EXPORT size_t libsmp_getMessagesToSend();
-DLL_EXPORT uint16_t libsmp_getNextMessageLength();
-DLL_EXPORT uint8_t libsmp_getMessage(message_t* msg);
-DLL_EXPORT uint32_t libsmp_sendBytes(const uint8_t* bytes, uint32_t length);
-DLL_EXPORT void libsmp_useRS(BOOL rs);
+DLL_EXPORT void libsmp_addReceivedBytes(const uint8_t* bytes, uint32_t length, void* obj);
+DLL_EXPORT size_t libsmp_bytesMessagesToReceive(void* obj);
+DLL_EXPORT uint16_t libsmp_getNextReceivedMessageLength(void* obj);
+DLL_EXPORT uint8_t libsmp_getReceivedMessage(message_t* msg, void* obj);
+DLL_EXPORT size_t libsmp_getMessagesToSend(void* obj);
+DLL_EXPORT uint16_t libsmp_getNextMessageLength(void* obj);
+DLL_EXPORT uint8_t libsmp_getMessage(message_t* msg, void* obj);
+DLL_EXPORT uint32_t libsmp_sendBytes(const uint8_t* bytes, uint32_t length, void* obj);
+DLL_EXPORT void* libsmp_createNewObject(bool useRS);
+DLL_EXPORT void libsmp_deleteObject(void* obj);
 
 #ifdef __cplusplus
 }

@@ -51,6 +51,7 @@
 					<Add option="-std=c99" />
 					<Add option="-m64" />
 					<Add option="-DBUILD_DLL" />
+					<Add option="-DUSE_RS_CODE" />
 					<Add directory="../../libfifo/c" />
 				</Compiler>
 				<ResourceCompiler>

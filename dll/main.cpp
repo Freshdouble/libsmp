@@ -5,91 +5,75 @@
 #include <vector>
 #include <new>
 #include "smpWrapper.h"
+#include <algorithm>
 
 using namespace std;
 
+vector<SMP*> instances;
+
 extern "C" DLL_EXPORT void libsmp_addReceivedBytes(const uint8_t* bytes, uint32_t length, void* obj)
 {
-	SMP* smp = obj;
-	smp->recieveInBytes(data,legnth);
+	SMP* smp = (SMP*)obj;
+	smp->recieveInBytes(bytes,length);
 }
 
 extern "C" DLL_EXPORT size_t libsmp_bytesMessagesToReceive(void* obj)
 {
-	SMP* smp = obj;
-    return receiveBuffer.size();
+	SMP* smp = (SMP*)obj;
+    return smp->MessagesToReceive();
 }
 
 extern "C" DLL_EXPORT uint16_t libsmp_getNextReceivedMessageLength(void* obj)
 {
-    if(receiveBuffer.empty())
-        return 0;
-    message_t msg = receiveBuffer.back();
-    return msg.size;
+    SMP* smp = (SMP*)obj;
+    return smp->getNextReceivedMessageLength();
 }
 
 extern "C" DLL_EXPORT uint8_t libsmp_getReceivedMessage(message_t* msg, void* obj)
 {
-    if(!receiveBuffer.empty())
-    {
-        *msg = receiveBuffer.back();
-        receiveBuffer.pop_back();
-        return 1;
-    }
-    else
-        msg->size = 0;
-    return 0;
+    SMP* smp = (SMP*)obj;
+    return smp->getReceivedMessage(msg);
 }
 
 extern "C" DLL_EXPORT size_t libsmp_getMessagesToSend(void* obj)
 {
-    return sendBuffer.size();
+    SMP* smp = (SMP*)obj;
+    return smp->getMessagesToSend();
 }
 
 extern "C" DLL_EXPORT uint16_t libsmp_getNextMessageLength(void* obj)
 {
-    if(sendBuffer.empty())
-        return 0;
-    message_t msg = sendBuffer.back();
-    return msg.size;
+    SMP* smp = (SMP*)obj;
+    return smp->getNextMessageLength();
 }
 
 extern "C" DLL_EXPORT uint8_t libsmp_getMessage(message_t* msg, void* obj)
 {
-    if(!sendBuffer.empty())
-    {
-        *msg = sendBuffer.back();
-        sendBuffer.pop_back();
-        return 1;
-    }
-    else
-        msg->size = 0;
-    return 0;
+    SMP* smp = (SMP*)obj;
+    return smp->getMessage(msg);
 }
 
 extern "C" DLL_EXPORT uint32_t libsmp_sendBytes(const uint8_t* bytes, uint32_t length, void* obj)
 {
-    return SMP_Send(bytes,length,&smp);
+    SMP* smp = (SMP*)obj;
+    return smp->send(bytes,length);
 }
 
-extern "C" DLL_EXPORT void libsmp_useRS(BOOL rs)
+extern "C" DLL_EXPORT void* libsmp_createNewObject(bool useRS)
 {
-    fifo_init(&fifo,messageBuffer,(uint16_t)sizeof(messageBuffer));
-    smp.buffer = &fifo;
-    smp.frameReadyCallback = frameReady;
-    smp.send = sendCallback;
-    smp.rogueFrameCallback = 0;
-    #ifdef USE_RS_CODE
-    if(rs)
+    SMP* instance = new SMP(useRS);
+    instances.push_back(instance);
+    return instance;
+}
+
+extern "C" DLL_EXPORT void libsmp_deleteObject(void* obj)
+{
+    vector<SMP*>::iterator it;
+    it = find(instances.begin(),instances.end(),(SMP*)obj);
+    if(it != instances.end())
     {
-        smp.ecc = &ecc;
+        delete *it;
     }
-    else
-    {
-        smp.ecc = 0;
-    }
-    #endif
-    SMP_Init(&smp);
 }
 
 extern "C" DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -97,9 +81,6 @@ extern "C" DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
     switch (fdwReason)
     {
     case DLL_PROCESS_ATTACH:
-        libsmp_useRS(FALSE);
-        receiveBuffer.clear();
-        sendBuffer.clear();
         break;
     case DLL_THREAD_ATTACH:
         // attach to process
@@ -107,8 +88,11 @@ extern "C" DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
         break;
 
     case DLL_PROCESS_DETACH:
-        receiveBuffer.clear();
-        sendBuffer.clear();
+        for(vector<SMP*>::iterator it = instances.begin(); it != instances.end(); ++it)
+        {
+            delete *it;
+        }
+        instances.clear();
         break;
     case DLL_THREAD_DETACH:
         // detach from thread

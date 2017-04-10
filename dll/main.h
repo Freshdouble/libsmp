@@ -36,6 +36,7 @@ DLL_EXPORT uint16_t libsmp_getNextMessageLength(void* obj);
 DLL_EXPORT uint8_t libsmp_getMessage(message_t* msg, void* obj);
 DLL_EXPORT uint32_t libsmp_sendBytes(const uint8_t* bytes, uint32_t length, void* obj);
 DLL_EXPORT void* libsmp_createNewObject(bool useRS);
+DLL_EXPORT void libsmp_deleteObject(void* obj);
 
 #ifdef __cplusplus
 }

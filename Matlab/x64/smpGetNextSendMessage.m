@@ -1,4 +1,4 @@
-function [ message, success ] = smpGetNextSendMessage()
+function [ message, success ] = smpGetNextSendMessage(instance)
 % smpGetNextSendMessage Gets the next message in the send buffer.
 % message = Vector that holds the bytes that should be sent over the
 % interface.
@@ -7,7 +7,7 @@ function [ message, success ] = smpGetNextSendMessage()
 %
 
 if libisloaded('libsmp_x64')
-    messageSize = calllib('libsmp_x64','libsmp_getNextMessageLength');
+    messageSize = calllib('libsmp_x64','libsmp_getNextMessageLength',instance);
     if messageSize == 0
         message = zeros(1,1);
         success = false;
@@ -16,7 +16,7 @@ if libisloaded('libsmp_x64')
         data.message = libpointer('uint8Ptr',msg);
         data.size = uint32(0);
         cstr = libstruct('message_t',data);
-        [~,cstr] = calllib('libsmp_x64','libsmp_getMessage',cstr);
+        [~,cstr] = calllib('libsmp_x64','libsmp_getMessage',cstr,instance);
         if cstr.size == 0
             message = zeros(1,1);
             success = false;
