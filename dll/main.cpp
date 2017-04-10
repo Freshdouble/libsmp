@@ -4,63 +4,23 @@
 #include <inttypes.h>
 #include <vector>
 #include <new>
+#include "smpWrapper.h"
 
 using namespace std;
 
-static smp_struct_t smp;
-static uint8_t messageBuffer[GET_BUFFER_SIZE(65000)];
-static fifo_t fifo;
-#ifdef USE_RS_CODE
-static ecc_t ecc;
-#endif // USE_RS_CODE
-
-static vector<message_t> receiveBuffer;
-static vector<message_t> sendBuffer;
-
-extern "C" signed char frameReady(fifo_t *buffer)
+extern "C" DLL_EXPORT void libsmp_addReceivedBytes(const uint8_t* bytes, uint32_t length, void* obj)
 {
-    message_t msg;
-    msg.size = fifo_read_bytes(msg.message,buffer,65536);
-    try
-    {
-        receiveBuffer.push_back(msg);
-    }
-    catch(bad_alloc& ex)
-    {
-        return -1;
-    }
-
-    return 0;
+	SMP* smp = obj;
+	smp->recieveInBytes(data,legnth);
 }
 
-extern "C" unsigned char sendCallback(unsigned char * buffer, unsigned int length)
+extern "C" DLL_EXPORT size_t libsmp_bytesMessagesToReceive(void* obj)
 {
-    message_t msg;
-    memcpy(msg.message,buffer,length);
-    msg.size = length;
-    try
-    {
-        sendBuffer.push_back(msg);
-    }
-    catch(bad_alloc& ex)
-    {
-        return 0;
-    }
-
-    return length;
-}
-
-extern "C" DLL_EXPORT void libsmp_addReceivedBytes(const uint8_t* bytes, uint32_t length)
-{
-    SMP_RecieveInBytes(bytes,length,&smp);
-}
-
-extern "C" DLL_EXPORT size_t libsmp_bytesMessagesToReceive()
-{
+	SMP* smp = obj;
     return receiveBuffer.size();
 }
 
-extern "C" DLL_EXPORT uint16_t libsmp_getNextReceivedMessageLength()
+extern "C" DLL_EXPORT uint16_t libsmp_getNextReceivedMessageLength(void* obj)
 {
     if(receiveBuffer.empty())
         return 0;
@@ -68,7 +28,7 @@ extern "C" DLL_EXPORT uint16_t libsmp_getNextReceivedMessageLength()
     return msg.size;
 }
 
-extern "C" DLL_EXPORT uint8_t libsmp_getReceivedMessage(message_t* msg)
+extern "C" DLL_EXPORT uint8_t libsmp_getReceivedMessage(message_t* msg, void* obj)
 {
     if(!receiveBuffer.empty())
     {
@@ -81,12 +41,12 @@ extern "C" DLL_EXPORT uint8_t libsmp_getReceivedMessage(message_t* msg)
     return 0;
 }
 
-extern "C" DLL_EXPORT size_t libsmp_getMessagesToSend()
+extern "C" DLL_EXPORT size_t libsmp_getMessagesToSend(void* obj)
 {
     return sendBuffer.size();
 }
 
-extern "C" DLL_EXPORT uint16_t libsmp_getNextMessageLength()
+extern "C" DLL_EXPORT uint16_t libsmp_getNextMessageLength(void* obj)
 {
     if(sendBuffer.empty())
         return 0;
@@ -94,7 +54,7 @@ extern "C" DLL_EXPORT uint16_t libsmp_getNextMessageLength()
     return msg.size;
 }
 
-extern "C" DLL_EXPORT uint8_t libsmp_getMessage(message_t* msg)
+extern "C" DLL_EXPORT uint8_t libsmp_getMessage(message_t* msg, void* obj)
 {
     if(!sendBuffer.empty())
     {
@@ -107,7 +67,7 @@ extern "C" DLL_EXPORT uint8_t libsmp_getMessage(message_t* msg)
     return 0;
 }
 
-extern "C" DLL_EXPORT uint32_t libsmp_sendBytes(const uint8_t* bytes, uint32_t length)
+extern "C" DLL_EXPORT uint32_t libsmp_sendBytes(const uint8_t* bytes, uint32_t length, void* obj)
 {
     return SMP_Send(bytes,length,&smp);
 }
