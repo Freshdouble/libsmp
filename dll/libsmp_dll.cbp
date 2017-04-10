@@ -119,6 +119,8 @@
 		</Unit>
 		<Unit filename="main.cpp" />
 		<Unit filename="main.h" />
+		<Unit filename="smpWrapper.cpp" />
+		<Unit filename="smpWrapper.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />
