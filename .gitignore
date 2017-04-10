@@ -6,3 +6,6 @@ test/libsmpTest/bin/
 test/libsmpTest/obj/
 dll/libsmpTest/bin/
 dll/libsmpTest/obj/
+
+dllManaged/libSMP/libSMP/bin/
+dllManaged/libSMP/libSMP/obj/
