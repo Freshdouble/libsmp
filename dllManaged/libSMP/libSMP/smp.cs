@@ -1,75 +1,121 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 
 namespace libSMP
 {
-    class SMP
+    [System.Runtime.InteropServices.StructLayoutAttribute(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = System.Runtime.InteropServices.CharSet.Ansi)]
+    struct message_t
     {
-        private struct message_t
-        {
-            public byte[] message;
-            public UInt32 size;
-        }
 
-        [DllImport("libsmp_x64.dll")]
-        private static extern void libsmp_addReceivedBytes(ref byte[] bytes, UInt32 length, IntPtr obj);
+        /// unsigned char[65536]
+        public byte[] message;
 
-        [DllImport("libsmp_x64.dll")]
-        private static extern UInt32 libsmp_bytesMessagesToReceive(IntPtr obj);
+        /// unsigned int
+        public uint size;
+    }
 
-        [DllImport("libsmp_x64.dll")]
-        private static extern UInt16 libsmp_getNextReceivedMessageLength(IntPtr obj);
+    partial class NativeMethods
+    {
 
-        [DllImport("libsmp_x64.dll")]
-        private static extern byte libsmp_getReceivedMessage(ref message_t msg, IntPtr obj);
+        /// Return Type: void
+        ///bytes: char*
+        ///length: unsigned int
+        ///obj: void*
+        [System.Runtime.InteropServices.DllImportAttribute("libsmp_x64.dll", EntryPoint = "libsmp_addReceivedBytes")]
+        public static extern void libsmp_addReceivedBytes(byte[] bytes, uint length, System.IntPtr obj);
 
-        [DllImport("libsmp_x64.dll")]
-        private static extern UInt32 libsmp_getMessagesToSend(IntPtr obj);
 
-        [DllImport("libsmp_x64.dll")]
-        private static extern UInt16 libsmp_getNextMessageLength(IntPtr obj);
+        /// Return Type: size_t->unsigned int
+        ///obj: void*
+        [System.Runtime.InteropServices.DllImportAttribute("libsmp_x64.dll", EntryPoint = "libsmp_bytesMessagesToReceive")]
+        [return: System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.SysUInt)]
+        public static extern uint libsmp_bytesMessagesToReceive(System.IntPtr obj);
 
-        [DllImport("libsmp_x64.dll")]
-        private static extern byte libsmp_getMessage(ref message_t msg, IntPtr obj);
 
-        [DllImport("libsmp_x64.dll")]
-        private static extern UInt32 libsmp_sendBytes(ref byte[] bytes, UInt32 length, IntPtr obj);
+        /// Return Type: unsigned short
+        ///obj: void*
+        [System.Runtime.InteropServices.DllImportAttribute("libsmp_x64.dll", EntryPoint = "libsmp_getNextReceivedMessageLength")]
+        public static extern ushort libsmp_getNextReceivedMessageLength(System.IntPtr obj);
 
-        [DllImport("libsmp_x64.dll")]
-        private static extern IntPtr libsmp_createNewObject(bool rs);
 
-        [DllImport("libsmp_x64.dll")]
-        private static extern void libsmp_deleteObject(IntPtr obj);
+        /// Return Type: unsigned char
+        ///msg: message_t*
+        ///obj: void*
+        [System.Runtime.InteropServices.DllImportAttribute("libsmp_x64.dll", EntryPoint = "libsmp_getReceivedMessage")]
+        public static extern byte libsmp_getReceivedMessage(ref message_t msg, System.IntPtr obj);
 
+
+        /// Return Type: size_t->unsigned int
+        ///obj: void*
+        [System.Runtime.InteropServices.DllImportAttribute("libsmp_x64.dll", EntryPoint = "libsmp_getMessagesToSend")]
+        [return: System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.SysUInt)]
+        public static extern uint libsmp_getMessagesToSend(System.IntPtr obj);
+
+
+        /// Return Type: unsigned short
+        ///obj: void*
+        [System.Runtime.InteropServices.DllImportAttribute("libsmp_x64.dll", EntryPoint = "libsmp_getNextMessageLength")]
+        public static extern ushort libsmp_getNextMessageLength(System.IntPtr obj);
+
+
+        /// Return Type: unsigned char
+        ///msg: message_t*
+        ///obj: void*
+        [System.Runtime.InteropServices.DllImportAttribute("libsmp_x64.dll", EntryPoint = "libsmp_getMessage")]
+        public static extern byte libsmp_getMessage(ref message_t msg, System.IntPtr obj);
+
+
+        /// Return Type: unsigned int
+        ///bytes: char*
+        ///length: unsigned int
+        ///obj: void*
+        [System.Runtime.InteropServices.DllImportAttribute("libsmp_x64.dll", EntryPoint = "libsmp_sendBytes")]
+        public static extern uint libsmp_sendBytes(byte[] bytes, uint length, System.IntPtr obj);
+
+
+        /// Return Type: void*
+        ///useRS: boolean
+        [System.Runtime.InteropServices.DllImportAttribute("libsmp_x64.dll", EntryPoint = "libsmp_createNewObject")]
+        public static extern IntPtr libsmp_createNewObject([System.Runtime.InteropServices.MarshalAsAttribute(System.Runtime.InteropServices.UnmanagedType.I1)] bool useRS);
+
+
+        /// Return Type: void
+        ///obj: void*
+        [System.Runtime.InteropServices.DllImportAttribute("libsmp_x64.dll", EntryPoint = "libsmp_deleteObject")]
+        public static extern void libsmp_deleteObject(System.IntPtr obj);
+
+    }
+
+
+    public class SMP
+    {
         public delegate void messageReceived(object sender);
-        public delegate void messageSend(byte[] buffer, int size);
+        public delegate void messageSend(byte[] buffer, int offset, int size);
 
         public event messageReceived received;
         public event messageSend send;
 
-        IntPtr obj;
+        private IntPtr obj;
 
         public SMP(bool useRS)
         {
-            obj = libsmp_createNewObject(useRS);
+            NativeMethods.libsmp_createNewObject(useRS);
             received = null;
             send = null;
         }
 
         ~SMP()
         {
-            libsmp_deleteObject(obj);
+            NativeMethods.libsmp_deleteObject(obj);
             received = null;
             send = null;
         }
 
         public void addReceivedBytes(byte[] bytes, UInt32 length)
         {
-            libsmp_addReceivedBytes(ref bytes, length, obj);
+            NativeMethods.libsmp_addReceivedBytes(bytes, length, obj);
             if ((received != null) && (getReceivedMessageCount() > 0))
             {
                 received(this);
@@ -78,14 +124,14 @@ namespace libSMP
 
         public UInt32 getReceivedMessageCount()
         {
-            return libsmp_bytesMessagesToReceive(obj);
+            return NativeMethods.libsmp_bytesMessagesToReceive(obj);
         }
 
         public byte[] getReceivedMessage()
         {
             message_t msg = new message_t();
-            msg.message = new byte[libsmp_getNextReceivedMessageLength(obj)];
-            if (libsmp_getReceivedMessage(ref msg, obj) != 0)
+            msg.message = new byte[NativeMethods.libsmp_getNextReceivedMessageLength(obj)];
+            if (NativeMethods.libsmp_getReceivedMessage(ref msg, obj) != 0)
             {
                 return msg.message;
             }
@@ -97,14 +143,14 @@ namespace libSMP
 
         public UInt32 getMessagesToSend()
         {
-            return libsmp_getMessagesToSend(obj);
+            return NativeMethods.libsmp_getMessagesToSend(obj);
         }
 
         public byte[] getMessageToSend()
         {
             message_t msg = new message_t();
-            msg.message = new byte[libsmp_getNextMessageLength(obj)];
-            if (libsmp_getMessage(ref msg, obj) != 0)
+            msg.message = new byte[NativeMethods.libsmp_getNextMessageLength(obj)];
+            if (NativeMethods.libsmp_getMessage(ref msg, obj) != 0)
             {
                 return msg.message;
             }
@@ -116,11 +162,11 @@ namespace libSMP
 
         public void sendBytes(byte[] bytes, UInt32 length)
         {
-            libsmp_sendBytes(ref bytes, length, obj);
+            NativeMethods.libsmp_sendBytes(bytes, length, obj);
             if (send != null && getMessagesToSend() > 0)
             {
                 byte[] message = getMessageToSend();
-                send(message, message.Length);
+                send(message, 0, message.Length);
             }
         }
     }
