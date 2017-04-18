@@ -11,7 +11,7 @@ namespace smpTest
     {
         static SMP send;
         static SMP receive;
-        static byte[] message = { 10, 20, 50, 40, 50 };
+        static byte[] message = { 10, 20, 50, 40, 50, 10, 20, 50, 40, 50, 10, 20, 50, 40, 50, 10, 20, 50, 40, 50, 10, 20, 50, 40, 50};
         static void Main(string[] args)
         {
             send = new SMP(true);
@@ -44,7 +44,6 @@ namespace smpTest
 
         private static ushort Send_send(byte[] buffer, int length)
         {
-            buffer[1] = 254;
             return (ushort)receive.RecieveInBytes(buffer, (uint)length);
         }
 

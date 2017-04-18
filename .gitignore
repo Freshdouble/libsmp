@@ -9,3 +9,5 @@ dll/libsmpTest/obj/
 
 dllManaged/libSMP/libSMP/bin/
 dllManaged/libSMP/libSMP/obj/
+dllManaged/libSMP/smpTest/bin/
+dllManaged/libSMP/smpTest/obj/
