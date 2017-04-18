@@ -1,0 +1,10 @@
+C:\Users\Local\Documents\libsmp\dllManaged\libSMP\smpTest\bin\Debug\smpTest.exe.config
+C:\Users\Local\Documents\libsmp\dllManaged\libSMP\smpTest\bin\Debug\smpTest.exe
+C:\Users\Local\Documents\libsmp\dllManaged\libSMP\smpTest\bin\Debug\smpTest.pdb
+C:\Users\Local\Documents\libsmp\dllManaged\libSMP\smpTest\bin\Debug\libSMP.dll
+C:\Users\Local\Documents\libsmp\dllManaged\libSMP\smpTest\bin\Debug\libRS.dll
+C:\Users\Local\Documents\libsmp\dllManaged\libSMP\smpTest\bin\Debug\libSMP.pdb
+C:\Users\Local\Documents\libsmp\dllManaged\libSMP\smpTest\bin\Debug\libRS.pdb
+C:\Users\Local\Documents\libsmp\dllManaged\libSMP\smpTest\obj\Debug\smpTest.csprojResolveAssemblyReference.cache
+C:\Users\Local\Documents\libsmp\dllManaged\libSMP\smpTest\obj\Debug\smpTest.exe
+C:\Users\Local\Documents\libsmp\dllManaged\libSMP\smpTest\obj\Debug\smpTest.pdb
