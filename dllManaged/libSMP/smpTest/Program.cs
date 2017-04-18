@@ -44,6 +44,7 @@ namespace smpTest
 
         private static ushort Send_send(byte[] buffer, int length)
         {
+            buffer[1] = 255;
             return (ushort)receive.RecieveInBytes(buffer, (uint)length);
         }
 
