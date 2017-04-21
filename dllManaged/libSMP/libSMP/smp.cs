@@ -436,7 +436,7 @@ namespace libSMP
                             return -1;
                         }
                     }
-                    for (i = 0; i < Constants.Blocksize; i++)
+                    for (i = 0; i < Constants.BlockData; i++)
                     {
                         ret = (byte)strippFramestart(rsBuffer[i]);
                         if (ret < 0)
