@@ -31,6 +31,26 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="../../c/berlekamp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../c/crcgen.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../c/ecc.h" />
+		<Unit filename="../../c/galois.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../c/libsmp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../c/libsmp.h" />
+		<Unit filename="../../c/main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../c/rs.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<envvars />

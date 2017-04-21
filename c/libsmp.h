@@ -47,38 +47,44 @@ typedef signed char (*SMP_Frame_Ready)(fifo_t* data); //FrameReadyCallback: Leng
 Sends arbitrary number of bytes over interface.
 Returns the number of bytes that were sent
 */
-typedef unsigned char (*SMP_send_function)(unsigned char * buffer, unsigned int length);
+typedef unsigned char (*SMP_send_function)(const unsigned char * buffer, unsigned int length);
 
 typedef struct
 {
-	unsigned short bytesToRecieve;
-	fifo_t* buffer; //Buffersize must match 1 Byte (sizeof(uint8_t))
-
-	SMP_send_function send;
-	SMP_Frame_Ready frameReadyCallback;
-	SMP_Frame_Ready rogueFrameCallback;
-
-	unsigned char crcHighByte;
-	unsigned short crc;
-	struct
+    unsigned char crcHighByte;
+    #ifdef USE_RS_CODE
+    unsigned char rsBuffer[Blocksize];
+    #endif
+    struct
 	{
 		unsigned int recieving :1;
 		unsigned int recievedDelimeter :1;
 		unsigned int status :2;
 		unsigned int noCRC :1;
 	} flags;
-
+	unsigned short bytesToRecieve;
+	unsigned short crc;
 	#ifdef USE_RS_CODE
-	unsigned char rsBuffer[Blocksize];
 	unsigned short rsPtr;
+	#endif
+	fifo_t* buffer; //Buffersize must match 1 Byte (sizeof(uint8_t))
+
+	SMP_send_function send;
+	#ifdef USE_RS_CODE
+	SMP_send_function intermediateSend;
+	#endif
+	SMP_Frame_Ready frameReadyCallback;
+	SMP_Frame_Ready rogueFrameCallback;
+#ifdef USE_RS_CODE
 	ecc_t* ecc;
-	#endif // USE_RS_CODE
+#endif // USE_RS_CODE
 } smp_struct_t;
 
 //Application functions
 signed char SMP_Init(smp_struct_t* st);
 unsigned int SMP_estimatePacketLength(const byte* buffer, unsigned short length, smp_struct_t *st);
-unsigned char SMP_Send(const byte *buffer, unsigned short length,smp_struct_t *st);
+unsigned short SMP_Send(const byte *buffer, unsigned short length, byte RSEncode, smp_struct_t *st);
+unsigned short SMP_EncodeRS(const byte* buffer, unsigned short length, smp_struct_t *st);
 /**
  * When one recievefunction returns an error, the error code should be parsed.
  * To avoid a buffer overflow it is recomended that no data is sent to the reciever until the error is cleared.
