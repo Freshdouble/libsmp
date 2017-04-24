@@ -42,7 +42,8 @@ namespace libSMP
 
             public Message(byte[] message, uint length)
             {
-                _message = message;
+                _message = new byte[length];
+                Array.Copy(message, 0, _message, 0, length);
                 _length = length;
             }
 
@@ -70,7 +71,9 @@ namespace libSMP
 
         private Queue<Message> receivedMessages;
         private Queue<Message> messagesToSend;
-          
+        private List<byte> _rogueBytes;
+
+        private ulong totalRogueByteCount;  
 
         public SMP(bool useRS)
         {
@@ -84,6 +87,10 @@ namespace libSMP
 
             messagesToSend = new Queue<Message>();
             receivedMessages = new Queue<Message>();
+            _rogueBytes = new List<byte>();
+
+            resetTotalRogueBytes();
+
             if (useRS)
                 rs = new ReedSolomon();
             else
@@ -242,23 +249,23 @@ namespace libSMP
                 }
                 newBuffer[0] = (byte)Constants.FRAMESTART;
                 if (send != null)
-                    return (send(newBuffer, (int)newMessageSize + 1) == (newMessageSize + 1)) ? newMessageSize + 1 : 0;
+                    return (send(newBuffer, (int)newMessageSize + 1) == (newMessageSize + 1)) ? length : 0;
                 else
                 {
-                    Message msg = new Message(newBuffer);
+                    Message msg = new Message(newBuffer, newMessageSize + 1);
                     messagesToSend.Enqueue(msg);
-                    return newMessageSize + 1;
+                    return length;
                 }
             }
             else
             {
                 if (send != null)
-                    return (send(message2, (int)messageSize) == (messageSize)) ? messageSize : 0;
+                    return (send(message2, (int)messageSize) == (messageSize)) ? length : 0;
                 else
                 {
-                    Message msg = new Message(message2);
+                    Message msg = new Message(message2, messageSize);
                     messagesToSend.Enqueue(msg);
-                    return messageSize;
+                    return length;
                 }
             }
             return 0;
@@ -268,11 +275,12 @@ namespace libSMP
         {
             uint i;
             int ret = 0;
+            int smpRet;
             for (i = 0; i < length; i++)
             {
-                ret = receiveByte(data[i]);
-                if (ret < 0)
-                    break;
+                smpRet = receiveByte(data[i]);
+                if (smpRet != 0)
+                    ret = smpRet;
             }
             return ret;
         }
@@ -283,6 +291,8 @@ namespace libSMP
             //State machine
             {
                 case 0: //Idle State Waiting for Framestart
+                    _rogueBytes.Add(data);
+                    totalRogueByteCount++;
                     break;
                 case 1:
                     if (bytesToRecieve == 0)
@@ -342,7 +352,13 @@ namespace libSMP
                         {
                             if (rogueFrame != null)
                                 return rogueFrame(fifo);
+                            else
+                            {
+                                totalRogueByteCount += (ulong)fifo.Count;
+                                _rogueBytes.AddRange(fifo);
+                            }
                         }
+                        fifo.Clear();
                     }
                     else
                     {
@@ -356,7 +372,7 @@ namespace libSMP
                     bytesToRecieve = 0;
                     flags.recieving = false;
                     rsPtr = 0;
-                    break;
+                    return -3;
             }
             return 0;
         }
@@ -382,7 +398,14 @@ namespace libSMP
                     flags.recievedDelimeter = false;
                     if (flags.recieving)
                     {
-                        rogueFrame?.Invoke(fifo);
+                        if (rogueFrame != null)
+                            rogueFrame(fifo);
+                        else
+                        {
+                            _rogueBytes.AddRange(fifo);
+                            totalRogueByteCount += (ulong)fifo.Count;
+                            fifo.Clear();
+                        }
                     }
                     flags.recieving = true;
                 }
@@ -406,6 +429,7 @@ namespace libSMP
         {
             uint i;
             byte ret = 0;
+            byte smpRet = 0;
             if ((flags.recieving || flags.recievedDelimeter) && rs != null)
             {
                 rsBuffer[rsPtr] = data;
@@ -425,22 +449,22 @@ namespace libSMP
                             if (Framepos > 0)
                             {
                                 Framepos--;
-                                ret = (byte)strippFramestart(rsBuffer[Framepos]);
+                                strippFramestart(rsBuffer[Framepos]);
                                 uint cpyLength = Constants.Blocksize - Framepos - 1;
                                 byte[] newBlock = new byte[cpyLength];
                                 Array.Copy(newBlock, 0, rsBuffer, Framepos + 1, cpyLength);
                                 Array.Copy(rsBuffer, 0, newBlock, 0, cpyLength);
                                 rsPtr = cpyLength;
-                                return ret;
+                                return -4;
                             }
-                            return -1;
+                            return -5;
                         }
                     }
                     for (i = 0; i < Constants.BlockData; i++)
                     {
-                        ret = (byte)strippFramestart(rsBuffer[i]);
-                        if (ret < 0)
-                            break;
+                        smpRet = (byte)strippFramestart(rsBuffer[i]);
+                        if (smpRet != 0)
+                            ret = smpRet;
                     }
                 }
             }
@@ -481,6 +505,37 @@ namespace libSMP
             {
                 return messagesToSend.Dequeue();
             }
+        }
+
+        public int NumberRogueBytes
+        {
+            get
+            {
+                return _rogueBytes.Count;
+            }
+        }
+
+        public byte[] RogueBytes
+        {
+            get
+            {
+                byte[] bytes = _rogueBytes.ToArray();
+                _rogueBytes.Clear();
+                return bytes;
+            }
+        }
+
+        public ulong totalRogueBytes
+        {
+            get
+            {
+                return totalRogueByteCount;
+            }
+        }
+
+        public void resetTotalRogueBytes()
+        {
+            totalRogueByteCount = 0;
         }
     }
 }

@@ -30,7 +30,15 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-DUSE_RS_CODE" />
+			<Add directory="../../libfifo/c" />
 		</Compiler>
+		<ResourceCompiler>
+			<Add directory="../../libfifo/c" />
+		</ResourceCompiler>
+		<Linker>
+			<Add directory="../../libfifo/c" />
+		</Linker>
 		<Unit filename="../../c/berlekamp.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -51,8 +59,14 @@
 		<Unit filename="../../c/rs.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../../libfifo/c/libfifo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../libfifo/c/libfifo.h" />
 		<Extensions>
-			<code_completion />
+			<code_completion>
+				<search_path add="..\..\libfifo\c" />
+			</code_completion>
 			<envvars />
 			<debugger />
 			<lib_finder disable_auto="1" />
