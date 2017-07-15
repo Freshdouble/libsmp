@@ -3,7 +3,7 @@ clear all;
 
 instance = smpGetInstance(false); %Use library with Reed Solomon Codes change to false to use the library without reed solomon encoding
 
-message = randi(255,252,1);
+message = randi(255,20000,1);
 smpSendBytes(message,instance); %Prepare message for sending
 if smpSendMessagesCount(instance) == 0 %Check how many messages are in the send buffer
     error('smp should have one message in the buffer at this point');
@@ -18,8 +18,7 @@ end
 
 %% Add some random data to test rogueByte detection
 
-%%rogue = randi(255,10000,1);
-rogue = [];
+rogue = randi(255,10000,1);
 smpReceiveBytes(rogue,instance);
 
 %% Receive Data from the interface

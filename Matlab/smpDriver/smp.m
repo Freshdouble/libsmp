@@ -12,6 +12,8 @@ classdef smp < handle
       
       receivedMessages
       MessagesToSend
+      
+      receivedLengthBytes
     end
     
     properties (SetAccess = private, GetAccess = public)
@@ -48,9 +50,10 @@ classdef smp < handle
                     obj.bytesToReceive = 0;
                     obj.flags.receivedDelimeter = false;
                     if obj.flags.receiving
-                        [~,number] = size(obj.fifo);
-                        obj.rogueByteCounter = obj.rogueByteCounter + number;
+                        [number,~] = size(obj.fifo);
+                        obj.rogueByteCounter = obj.rogueByteCounter + number + 1 + obj.receivedLengthBytes;
                         obj.fifo = [];
+                        obj.receivedLengthBytes = 0;
                     end
                     obj.flags.receiving = true;
                 end
@@ -63,11 +66,14 @@ classdef smp < handle
         function stat = processByte(obj,data)
             switch obj.flags.status
                 case 0
+                    obj.rogueByteCounter = obj.rogueByteCounter + 1;
                 case 1
                     if obj.bytesToReceive == 0
                         obj.bytesToReceive = data;
+                        obj.receivedLengthBytes = 1;
                     else
-                        obj.bytesToReceive = bitor(obj.bytesToReceive,bitshift(data,-8));
+                        obj.receivedLengthBytes = 2;
+                        obj.bytesToReceive = bitor(obj.bytesToReceive,bitshift(data,8));
                         obj.flags.status = 2;
                         obj.fifo = [];
                         obj.crc = 0;
@@ -90,10 +96,11 @@ classdef smp < handle
                             obj.receivedMessages = [obj.receivedMessages, obj.fifo];
                             stat = 1;
                         else
-                            [~,number] = size(obj.fifo);
-                            obj.rogueByteCounter = obj.rogueByteCounter + number;
+                            [number,~] = size(obj.fifo);
+                            obj.rogueByteCounter = obj.rogueByteCounter + number + 5;
                             stat = -1;
                         end
+                        obj.receivedLengthBytes = 0;
                         obj.fifo = [];
                         return
                     else
@@ -104,6 +111,7 @@ classdef smp < handle
                     obj.flags.status = 0;
                     obj.bytesToReceive = 0;
                     obj.flags.receiving = false;
+                    obj.receivedLengthBytes = 0;
                     stat = -3;
                     return
             end
@@ -120,7 +128,8 @@ classdef smp < handle
             obj.fifo = [];
             obj.MessagesToSend = [];
             obj.receivedMessages = [];
-            rogueByteCounter = 0;
+            obj.rogueByteCounter = 0;
+            obj.receivedLengthBytes = 0;
             
             obj.CRC_POLYNOM = hex2dec('A001');
             obj.FRAMESTART = hex2dec('FF');
@@ -176,6 +185,7 @@ classdef smp < handle
             end
             
             number = completeFramesize + 3 + offset;
+            message2 = message2(1:number,:);
             obj.MessagesToSend = [obj.MessagesToSend, message2];
         end
         
