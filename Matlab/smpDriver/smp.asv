@@ -1,4 +1,4 @@
-classdef smp < handle
+classdef smp
     %UNTITLED2 Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -18,16 +18,15 @@ classdef smp < handle
         CRC_POLYNOM
         FRAMESTART
         MAX_PAYLOAD
-        rogueByteCounter
     end
    
     methods (Access = private)
         function crc = crc16(obj,crc,c,mask)
             for i = 0:7
-                if bitand(bitxor(crc,c),1) ~= 0
-                    crc = bitxor(bitshift(crc,-1),mask);
+                if bitand(mod(crc,c),1) ~= 0
+                    crc = mod(bitshift(crc,-1),mask);
                 else
-                    crc = bitshift(crc,-1);
+                    crc = bitshif(crc,-1);
                 end
                 c = bitshift(c,-1);
             end
@@ -48,8 +47,6 @@ classdef smp < handle
                     obj.bytesToReceive = 0;
                     obj.flags.receivedDelimeter = false;
                     if obj.flags.receiving
-                        [~,number] = size(obj.fifo);
-                        obj.rogueByteCounter = obj.rogueByteCounter + number;
                         obj.fifo = [];
                     end
                     obj.flags.receiving = true;
@@ -79,7 +76,7 @@ classdef smp < handle
                         return
                     else
                         obj.bytesToReceive = obj.bytesToReceive - 1;
-                        obj.fifo = [obj.fifo;data];
+                        obj.fifo = [obj.fifo,data];
                         obj.crc = obj.crc16(obj.crc,data,obj.CRC_POLYNOM);
                     end
                 case 3
@@ -87,11 +84,9 @@ classdef smp < handle
                         obj.flags.status = 0;
                         obj.flags.receiving = false;
                         if obj.crc == (bitor(bitshift(obj.crcHighByte,8),data))
-                            obj.receivedMessages = [obj.receivedMessages, obj.fifo];
+                            obj.receivedMessages = [obj.receivedMessages; obj.fifo];
                             stat = 1;
                         else
-                            [~,number] = size(obj.fifo);
-                            obj.rogueByteCounter = obj.rogueByteCounter + number;
                             stat = -1;
                         end
                         obj.fifo = [];
@@ -113,14 +108,11 @@ classdef smp < handle
     
     methods
         function obj = smp()
-            obj.flags = struct('receiving',false,'receivedDelimeter',false,'noCRC', false,'status', 0);
+            obj.flags = struct(receiving,false,receivedDelimeter,false,noCRC, false,status, 0);
             obj.crc = 0;
             obj.crcHighByte = 0;
             obj.bytesToReceive = 0;
             obj.fifo = [];
-            obj.MessagesToSend = [];
-            obj.receivedMessages = [];
-            rogueByteCounter = 0;
             
             obj.CRC_POLYNOM = hex2dec('A001');
             obj.FRAMESTART = hex2dec('FF');
@@ -142,14 +134,12 @@ classdef smp < handle
                 message1(i + offset) = data(i);
                 crc = obj.crc16(crc,data(i),obj.CRC_POLYNOM);
             end
-            i = i + 1;
             
             message1(i + offset) = bitshift(crc,-8);
             if message1(i + offset) == obj.FRAMESTART
                 offset = offset + 1;
                 message1(i + offset) = obj.FRAMESTART;
             end
-            i = i + 1;
             message1(i + offset) = bitand(crc,255);
             if message1(i + offset) == obj.FRAMESTART
                 offset = offset + 1;
@@ -176,7 +166,7 @@ classdef smp < handle
             end
             
             number = completeFramesize + 3 + offset;
-            obj.MessagesToSend = [obj.MessagesToSend, message2];
+            obj.MessagesToSend = [obj.MessagesToSend; message2];
         end
         
         function stat = receiveByte(obj,data)
@@ -186,31 +176,9 @@ classdef smp < handle
         function stat = ReceiveInBytes(obj,data)
             stat = [];
             for i = 1:length(data)
-                status = obj.strippFramestart(data(i));
+                status = obj.strippFramestart(data);
                 stat = and(stat,status);
             end
-        end
-        
-        function number = getReceivedMessageCount(obj)
-            [~,number] = size(obj.receivedMessages);
-        end
-        
-        function message = getReceivedMessage(obj)
-            message = obj.receivedMessages(:,1);
-            obj.receivedMessages(:,1) = [];
-        end
-        
-        function number = getMessageToSendCount(obj)
-            [~,number] = size(obj.MessagesToSend);
-        end
-        
-        function message = getMessageToSend(obj)
-            message = obj.MessagesToSend(:,1);
-            obj.MessagesToSend(:,1) = [];
-        end
-        
-        function resetRougeByteCounter(obj)
-            obj.rogueByteCounter = 0;
         end
     end    
 end
