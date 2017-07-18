@@ -10,10 +10,12 @@ classdef smp < handle
       
       fifo
       
+      receivedLengthBytes
+    end
+    
+    properties (SetAccess = protected, GetAccess = protected)
       receivedMessages
       MessagesToSend
-      
-      receivedLengthBytes
     end
     
     properties (SetAccess = private, GetAccess = public)
@@ -93,7 +95,11 @@ classdef smp < handle
                         obj.flags.status = 0;
                         obj.flags.receiving = false;
                         if obj.crc == (bitor(bitshift(obj.crcHighByte,8),data))
-                            obj.receivedMessages = [obj.receivedMessages, obj.fifo];
+                            if isempty(obj.receivedMessages)
+                                obj.receivedMessages = obj.fifo;
+                            else
+                                obj.receivedMessages = [obj.receivedMessages, obj.fifo];
+                            end
                             stat = 1;
                         else
                             [number,~] = size(obj.fifo);
@@ -186,7 +192,11 @@ classdef smp < handle
             
             number = completeFramesize + 3 + offset;
             message2 = message2(1:number,:);
-            obj.MessagesToSend = [obj.MessagesToSend, message2];
+            if isempty(obj.MessagesToSend)
+                obj.MessagesToSend = message2;
+            else
+                obj.MessagesToSend = [obj.MessagesToSend, message2];
+            end
         end
         
         function stat = receiveByte(obj,data)
@@ -196,7 +206,7 @@ classdef smp < handle
         function stat = ReceiveInBytes(obj,data)
             stat = [];
             for i = 1:length(data)
-                status = obj.strippFramestart(data(i));
+                status = obj.receiveByte(data(i));
                 stat = and(stat,status);
             end
         end
@@ -206,8 +216,12 @@ classdef smp < handle
         end
         
         function message = getReceivedMessage(obj)
-            message = obj.receivedMessages(:,1);
-            obj.receivedMessages(:,1) = [];
+            if obj.getReceivedMessageCount() > 0
+                message = obj.receivedMessages(:,1);
+                obj.receivedMessages(:,1) = [];
+            else
+                message = [];
+            end
         end
         
         function number = getMessageToSendCount(obj)
@@ -215,8 +229,12 @@ classdef smp < handle
         end
         
         function message = getMessageToSend(obj)
-            message = obj.MessagesToSend(:,1);
-            obj.MessagesToSend(:,1) = [];
+            if obj.getMessageToSendCount() > 0
+                message = obj.MessagesToSend(:,1);
+                obj.MessagesToSend(:,1) = [];
+            else
+                message = [];
+            end
         end
         
         function resetRougeByteCounter(obj)
