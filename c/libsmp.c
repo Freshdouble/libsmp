@@ -2,9 +2,9 @@
  File: libsmp
  Autor: Peter Kremsner
  Date: 12.9.2014
-
+ 
  Basic data transmission protocoll to ensure data integrity
-
+ 
  ******************************************************************************************************/
 #include "libsmp.h"
 #include <stdio.h>
@@ -18,12 +18,10 @@
 
 #define MAX_PAYLOAD 65534
 
-#define USE_RS_CODE
-
 /***********************************************************************
  * Private function definiton to calculate the crc checksum
  */
-static unsigned int crc16(unsigned int crc, unsigned int c, unsigned int mask)
+unsigned int crc16(unsigned int crc, unsigned int c, unsigned int mask)
 {
     unsigned char i;
     unsigned int _crc = crc;
@@ -40,62 +38,6 @@ static unsigned int crc16(unsigned int crc, unsigned int c, unsigned int mask)
     return (_crc);
 }
 
-static int seekFramestart(const byte* data, unsigned int length)
-{
-    unsigned int i;
-    for (i = 0; i < length; i++)
-    {
-        if (data[i] == FRAMESTART)
-            return i;
-    }
-    return -1;
-}
-#ifdef USE_RS_CODE
-static unsigned short SMP_internal_EncodeRS(const byte* buffer, unsigned short length, smp_struct_t *st)
-{
-    if(length == 0)
-        return 0;
-    length--;
-    unsigned int BlockNumber = length / BlockData;
-    if (BlockNumber * BlockData < length)
-    {
-        BlockNumber++;
-    }
-    unsigned char newBuffer[Blocksize];
-    unsigned char CurrentBlock[BlockData];
-    unsigned int ptr = 1;
-    unsigned char i;
-    const byte fsc = FRAMESTART;
-
-    if (!st->send || (st->send(&fsc, 1) != 1))
-    {
-        return 0;
-    }
-
-    for (i = 0; i < BlockNumber; i++)
-    {
-        if ((unsigned int) (length - ptr + 1) >= BlockData)
-        {
-            MEMCPYFUNCTION(CurrentBlock, &buffer[ptr], BlockData);
-            ptr += BlockData;
-        }
-        else
-        {
-            const unsigned char zeroes[BlockData] =
-            { 0 };
-            MEMCPYFUNCTION(CurrentBlock, zeroes, BlockData);
-            MEMCPYFUNCTION(CurrentBlock, &buffer[ptr], length - ptr + 1);
-            ptr = length;
-        }
-        encode_data(CurrentBlock, BlockData, newBuffer, st->ecc);
-        if(st->send(newBuffer, Blocksize) != Blocksize)
-            return 0;
-        if (ptr == length)
-            break;
-    }
-    return BlockNumber * BlockData + 1;
-}
-#endif
 /************************************************************************
  * Initialize the smp-buffers
  * Set:
@@ -108,7 +50,7 @@ static unsigned short SMP_internal_EncodeRS(const byte* buffer, unsigned short l
  * before calling this function.
  * Return -1 if the datasize of the buffer is not the sizeof(uin8_t)
  * 0 otherwise
-
+ 
  ************************************************************************/
 signed char SMP_Init(smp_struct_t* st)
 {
@@ -119,6 +61,7 @@ signed char SMP_Init(smp_struct_t* st)
     }
     st->rsPtr = 0;
 #endif // USE_RS_CODE
+
     st->flags.recieving = 0;
     st->crc = 0;
     st->flags.status = 0;
@@ -135,7 +78,7 @@ signed char SMP_Init(smp_struct_t* st)
  * @return estimated size of the smp packet
  ************************************************************************/
 
-unsigned int SMP_estimatePacketLength(const byte* buffer, unsigned short length, smp_struct_t *st)
+unsigned int SMP_estimatePacketLength(const byte* buffer, unsigned short length)
 {
     unsigned short overheadCounter = 0;
     unsigned int ret = 0;
@@ -147,6 +90,7 @@ unsigned int SMP_estimatePacketLength(const byte* buffer, unsigned short length,
     }
     ret = length + overheadCounter + 5;
 #ifdef USE_RS_CODE
+
     if(st->ecc)
     {
         unsigned char Blocknumber = ret/BlockData;
@@ -158,91 +102,11 @@ unsigned int SMP_estimatePacketLength(const byte* buffer, unsigned short length,
     return ret;
 }
 
-unsigned short SMP_EncodeRS(const byte* buffer, unsigned short length, smp_struct_t *st)
-{
-    if(st->ecc == 0)
-        return 0;
-    #ifdef USE_RS_CODE
-    int Framestart = seekFramestart(buffer,length);
-    int signedLength = length;
-    const byte* bufferPtr = buffer;
-    unsigned char offset = 0;
-    unsigned short packetLength;
-
-    unsigned int sendBytes = 0;
-    unsigned int truePacketLength = 0;
-    unsigned int i;
-
-    while(Framestart >= 0)
-    {
-        signedLength -= Framestart;
-        if(signedLength < 0)
-            return sendBytes;
-        bufferPtr = &bufferPtr[Framestart];
-        offset = 0;
-
-        //Get PacketLength
-
-        packetLength = bufferPtr[1];
-        if(bufferPtr[1] == FRAMESTART)
-            offset++;
-        packetLength |= bufferPtr[2+offset] << 8;
-        offset = 0;
-        for(i = 1; i <= packetLength; i++)
-        {
-            if(bufferPtr[i] == FRAMESTART)
-            {
-                i++; //Skip mask byte
-                packetLength++;
-            }
-        }
-        truePacketLength = packetLength + 1; //Calculate Framestart to true length;
-
-        if(length < truePacketLength)
-            return sendBytes;
-        if(buffer[truePacketLength] == FRAMESTART)
-            truePacketLength += 2;
-        else
-            truePacketLength++;
-
-        if(length < truePacketLength)
-            return sendBytes;
-
-        if(buffer[truePacketLength] == FRAMESTART)
-            truePacketLength += 2;
-        else
-            truePacketLength++;
-
-        if(signedLength < truePacketLength)
-            return sendBytes; //No full packet in buffer
-
-        //Encode and send packet
-        if(SMP_internal_EncodeRS(bufferPtr,truePacketLength,st) > 0)
-        {
-            sendBytes += Framestart + truePacketLength;
-        }
-        else
-        {
-            return sendBytes;
-        }
-
-        signedLength -= truePacketLength;
-        if(signedLength < 0)
-            return sendBytes;
-        bufferPtr = &bufferPtr[truePacketLength];
-        Framestart = seekFramestart(bufferPtr,signedLength);
-    }
-    return sendBytes;
-    #else
-        return 0;
-    #endif
-}
-
 /************************************************************************/
 /* Sends data to the smp outputbuffer                                   */
 
 /************************************************************************/
-unsigned short SMP_Send(const byte *buffer, unsigned short length, byte RSEncode, smp_struct_t *st)
+unsigned int SMP_Send(const byte *buffer, unsigned short length, byte* messageBuffer, unsigned short bufferLength, byte** messageStartPtr)
 {
     unsigned int i = 2;
     unsigned int offset = 0;
@@ -250,13 +114,16 @@ unsigned short SMP_Send(const byte *buffer, unsigned short length, byte RSEncode
 
     if (length > MAX_PAYLOAD)
         return 0;
-
-    unsigned char message[2 * (length + 2) + 5];
+    unsigned char* message = messageBuffer;
     unsigned char* messagePtr = &message[5];
+
+    if(bufferLength < (2*(length + 2) + 5))
+        return 0;
 
     for (i = 0; i < length; i++)
     {
-
+        if(bufferLength <= i + offset + 5)
+            return 0;
         if (buffer[i] == FRAMESTART)
         {
             messagePtr[i + offset] = FRAMESTART;
@@ -305,31 +172,16 @@ unsigned short SMP_Send(const byte *buffer, unsigned short length, byte RSEncode
     MEMCPYFUNCTION(messagePtr,header,HeaderSize);
 
     unsigned int messageSize = completeFramesize + 3 + offset;
-#ifdef USE_RS_CODE
-    if(RSEncode && (st->ecc != 0))
-    {
-        if(SMP_internal_EncodeRS(messagePtr,messageSize,st) > 0)
-            return length;
-    }
-    else
-    {
-        if(st->intermediateSend)
-            return (st->intermediateSend(messagePtr, messageSize) == (messageSize)) ? length : 0;
-        else if(st->send)
-            return (st->send(messagePtr, messageSize) == (messageSize)) ? length : 0;
-    }
-#else
-        if(st->send)
-            return (st->send(messagePtr, messageSize) == (messageSize)) ? length : 0;
-#endif
-    return 0;
+
+    *messageStartPtr = messagePtr;
+    return messageSize;
 }
 
 /************************************************************************
-
+ 
  Recieve multiple bytes from the Interface and writes it to the
  recievebuffer.
-
+ 
  ************************************************************************/
 
 inline signed char SMP_RecieveInBytes(const byte* data, unsigned int length, smp_struct_t* st)
@@ -380,8 +232,10 @@ signed char private_SMP_RecieveInByte(byte data, smp_struct_t* st)
                 st->flags.status = 0;
                 st->flags.recieving = 0;
 #ifdef USE_RS_CODE
+
                 st->rsPtr = 0;
 #endif
+
                 return -1;
             }
             st->crc = crc16(st->crc, data, CRC_POLYNOM);
@@ -393,8 +247,10 @@ signed char private_SMP_RecieveInByte(byte data, smp_struct_t* st)
             st->flags.status = 0;
             st->flags.recieving = 0;
 #ifdef USE_RS_CODE
+
             st->rsPtr = 0;
 #endif
+
             if (st->crc == ((unsigned short) (st->crcHighByte << 8) | data)) //Read the crc and compare
             {
                 //Data ready
@@ -421,8 +277,10 @@ signed char private_SMP_RecieveInByte(byte data, smp_struct_t* st)
         st->bytesToRecieve = 0;
         st->flags.recieving = 0;
 #ifdef USE_RS_CODE
+
         st->rsPtr = 0;
 #endif // USE_RS_CODE
+
         return -3;
     }
     return 0;
@@ -468,6 +326,16 @@ signed char SMP_RecieveInByte(byte data, smp_struct_t* st)
 }
 
 #ifdef USE_RS_CODE
+unsigned int seekFramestart(byte* data, unsigned int length)
+{
+    unsigned int i;
+    for (i = 0; i < length; i++)
+    {
+        if (data[i] == FRAMESTART)
+            return i + 1;
+    }
+    return 0;
+}
 
 signed char SMP_RecieveInByte(byte data, smp_struct_t* st)
 {
@@ -489,10 +357,11 @@ signed char SMP_RecieveInByte(byte data, smp_struct_t* st)
                     st->flags.status = 0;
                     st->bytesToRecieve = 0;
                     st->flags.recieving = 0;
-                    int Framepos = seekFramestart(st->rsBuffer,
+                    unsigned int Framepos = seekFramestart(st->rsBuffer,
                                                            Blocksize);
-                    if (Framepos >= 0)
+                    if (Framepos > 0)
                     {
+                        Framepos--;
                         private_SMP_RecieveInByte_2(st->rsBuffer[Framepos], st);
                         unsigned int cpyLength = Blocksize - Framepos - 1;
                         byte newBlock[cpyLength];
