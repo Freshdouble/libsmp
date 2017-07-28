@@ -69,8 +69,8 @@ namespace libSMP
             }
         }
 
-        private Queue<Message> receivedMessages;
-        private Queue<Message> messagesToSend;
+        protected Queue<Message> receivedMessages;
+        protected Queue<Message> messagesToSend;
         private List<byte> _rogueBytes;
 
         private ulong totalRogueByteCount;  
