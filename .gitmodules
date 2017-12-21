@@ -1,5 +1,3 @@
-[submodule "libfifo"]
-	url = https://github.com/Freshdouble/libfifo
 [submodule "libRS"]
 	path = libRS
 	url = https://github.com/Freshdouble/libRS
