@@ -45,7 +45,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\libRS\libRS\libRS\libRS.csproj">
+    <ProjectReference Include="..\..\..\libRS\libRS\libRS.csproj">
       <Project>{637a4226-ee22-4224-bb5a-c42b0e2c615b}</Project>
       <Name>libRS</Name>
     </ProjectReference>

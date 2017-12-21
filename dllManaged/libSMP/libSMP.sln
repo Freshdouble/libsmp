@@ -1,15 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2009
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libSMP", "libSMP\libSMP.csproj", "{848B0646-AD62-4C17-B202-46EB3CDCD8C4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "smpTest", "smpTest\smpTest.csproj", "{BB94A95D-CD69-47D5-B10E-70B9E1FB854A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libRS", "..\..\..\libRS\libRS\libRS\libRS.csproj", "{637A4226-EE22-4224-BB5A-C42B0E2C615B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libRS", "..\..\libRS\libRS\libRS.csproj", "{637A4226-EE22-4224-BB5A-C42B0E2C615B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libRS_test", "..\..\..\libRS\libRS\libRS_test\libRS_test.csproj", "{DAC5C9C7-70EF-4745-A1A3-D6E81C12D896}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libRS_test", "..\..\libRS\libRS_test\libRS_test.csproj", "{DAC5C9C7-70EF-4745-A1A3-D6E81C12D896}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,5 +36,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {66F782D9-71B2-4F2F-B8A0-25D1A51E03E4}
 	EndGlobalSection
 EndGlobal
