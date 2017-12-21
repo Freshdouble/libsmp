@@ -40,9 +40,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ITransmitionInterface.cs" />
+    <Compile Include="Message.cs" />
+    <Compile Include="PacketStream.cs" />
     <Compile Include="SMP.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SynchronousSMP.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\libRS\libRS\libRS.csproj">

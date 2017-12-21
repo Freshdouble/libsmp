@@ -7,7 +7,7 @@ using libRS;
 
 namespace libSMP
 {
-    public class SMP
+    public class SMP : PacketStream
     {
         private struct Flags_s
         {
@@ -29,53 +29,19 @@ namespace libSMP
         private List<byte> fifo;
 
         public delegate int SMP_Frame_Ready(List<byte> fifo);
-        public delegate ushort SMP_send_function(byte[] buffer, int length);
 
         public event SMP_Frame_Ready frameReceived;
         public event SMP_Frame_Ready rogueFrame;
-        public event SMP_send_function send;
-
-        public class Message
-        {
-            private byte[] _message;
-            private uint _length;
-
-            public Message(byte[] message, uint length)
-            {
-                _message = new byte[length];
-                Array.Copy(message, 0, _message, 0, length);
-                _length = length;
-            }
-
-            public Message(byte[] message) : this(message,(uint)message.Length)
-            {
-
-            }
-
-            public byte[] message
-            {
-                get
-                {
-                    return _message;
-                }
-            }
-
-            public uint length
-            {
-                get
-                {
-                    return _length;
-                }
-            }
-        }
 
         protected Queue<Message> receivedMessages;
         protected Queue<Message> messagesToSend;
         private List<byte> _rogueBytes;
 
-        private ulong totalRogueByteCount;  
+        private ulong totalRogueByteCount;
 
-        public SMP(bool useRS)
+        private ITransmitionInterface inter;
+
+        public SMP(bool useRS, ITransmitionInterface inter)
         {
             flags = new Flags_s();
             crc = 0;
@@ -90,6 +56,8 @@ namespace libSMP
             _rogueBytes = new List<byte>();
 
             resetTotalRogueBytes();
+
+            this.inter = inter;
 
             if (useRS)
                 rs = new ReedSolomon();
@@ -248,27 +216,12 @@ namespace libSMP
                         break;
                 }
                 newBuffer[0] = (byte)Constants.FRAMESTART;
-                if (send != null)
-                    return (send(newBuffer, (int)newMessageSize + 1) == (newMessageSize + 1)) ? length : 0;
-                else
-                {
-                    Message msg = new Message(newBuffer, newMessageSize + 1);
-                    messagesToSend.Enqueue(msg);
-                    return length;
-                }
+                return (inter.Write(newBuffer, 0, (int)newMessageSize + 1) == (newMessageSize + 1)) ? length : 0;
             }
             else
             {
-                if (send != null)
-                    return (send(message2, (int)messageSize) == (messageSize)) ? length : 0;
-                else
-                {
-                    Message msg = new Message(message2, messageSize);
-                    messagesToSend.Enqueue(msg);
-                    return length;
-                }
+                return (inter.Write(message2, 0, (int)messageSize) == (messageSize)) ? length : 0;
             }
-            return 0;
         }
 
         public int RecieveInBytes(byte[] data, uint length)
@@ -533,9 +486,32 @@ namespace libSMP
             }
         }
 
+        public override bool CanRead => NumberMessagesToReceive > 0;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => inter.CanWrite;
+
+        public override int Length => NumberMessagesToReceive;
+
         public void resetTotalRogueBytes()
         {
             totalRogueByteCount = 0;
+        }
+
+        public override void Flush()
+        {
+            inter.Flush();
+        }
+
+        public override Message Read()
+        {
+            return NextReceivedMessage;
+        }
+
+        public override void Write(Message m)
+        {
+            SendData(m.message, m.length);
         }
     }
 }
