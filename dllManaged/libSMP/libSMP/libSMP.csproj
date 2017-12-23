@@ -49,7 +49,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SMPOutputBuffer.cs" />
     <Compile Include="SMPSerialPort.cs" />
-    <Compile Include="SynchronousSMP.cs" />
+    <Compile Include="SMPPolling.cs" />
     <Compile Include="TransmitionInterface.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace libSMP
 {
-    public class SynchronousSMP : SMPOutputBuffer
+    public class SMPPolling : SMPOutputBuffer
     {
         protected class Interface : ITransmitionInterface
         {
@@ -63,7 +63,7 @@ namespace libSMP
             }
         }
 
-        public SynchronousSMP(bool useRS) : base(useRS, new Interface())
+        public SMPPolling(bool useRS) : base(useRS, new Interface())
         {;
         }
 
