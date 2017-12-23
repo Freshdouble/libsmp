@@ -7,7 +7,7 @@ using libRS;
 
 namespace libSMP
 {
-    public class SMP : PacketStream
+    public abstract class SMP : IPacketStream
     {
         private struct Flags_s
         {
@@ -28,18 +28,9 @@ namespace libSMP
 
         private List<byte> fifo;
 
-        public delegate int SMP_Frame_Ready(List<byte> fifo);
+        protected ITransmitionInterface inter;
 
-        public event SMP_Frame_Ready frameReceived;
-        public event SMP_Frame_Ready rogueFrame;
-
-        protected Queue<Message> receivedMessages;
-        protected Queue<Message> messagesToSend;
-        private List<byte> _rogueBytes;
-
-        private ulong totalRogueByteCount;
-
-        private ITransmitionInterface inter;
+        public event EventHandler MessageReceived;
 
         public SMP(bool useRS, ITransmitionInterface inter)
         {
@@ -51,18 +42,24 @@ namespace libSMP
             rsPtr = 0;
             fifo = new List<byte>();
 
-            messagesToSend = new Queue<Message>();
-            receivedMessages = new Queue<Message>();
-            _rogueBytes = new List<byte>();
-
-            resetTotalRogueBytes();
-
+            inter.DataReceived += Inter_received;
             this.inter = inter;
 
             if (useRS)
                 rs = new ReedSolomon();
             else
                 rs = null;
+        }
+
+        private void Inter_received(object sender, Object e)
+        {
+            ITransmitionInterface inter = (ITransmitionInterface)sender;
+            int bytesToRead = inter.BytesAvailable;
+            byte[] buffer = new byte[bytesToRead];
+
+            inter.Read(buffer, 0, bytesToRead);
+
+            RecieveInBytes(buffer, (uint)buffer.Length);
         }
 
         /***********************************************************************
@@ -244,8 +241,7 @@ namespace libSMP
             //State machine
             {
                 case 0: //Idle State Waiting for Framestart
-                    _rogueBytes.Add(data);
-                    totalRogueByteCount++;
+                    rogueFrameReceived(new List<byte>() { data });
                     break;
                 case 1:
                     if (bytesToRecieve == 0)
@@ -292,24 +288,12 @@ namespace libSMP
                         if (crc == ((crcHighByte << 8) | data)) //Read the crc and compare
                         {
                             //Data ready
-                            if (frameReceived != null)
-                                return frameReceived(fifo);
-                            else
-                            {
-                                Message msg = new Message(fifo.ToArray());
-                                receivedMessages.Enqueue(msg);
-                                return 0;
-                            }
+                            frameReceived(fifo);
+                            MessageReceived?.Invoke(this, null);
                         }
                         else //crc doesnt match.
                         {
-                            if (rogueFrame != null)
-                                return rogueFrame(fifo);
-                            else
-                            {
-                                totalRogueByteCount += (ulong)fifo.Count;
-                                _rogueBytes.AddRange(fifo);
-                            }
+                            rogueFrameReceived(fifo);
                         }
                         fifo.Clear();
                     }
@@ -351,14 +335,7 @@ namespace libSMP
                     flags.recievedDelimeter = false;
                     if (flags.recieving)
                     {
-                        if (rogueFrame != null)
-                            rogueFrame(fifo);
-                        else
-                        {
-                            _rogueBytes.AddRange(fifo);
-                            totalRogueByteCount += (ulong)fifo.Count;
-                            fifo.Clear();
-                        }
+                        rogueFrameReceived(fifo);
                     }
                     flags.recieving = true;
                 }
@@ -378,7 +355,7 @@ namespace libSMP
             return 0;
         }
 
-        public int receiveByte(byte data)
+        protected int receiveByte(byte data)
         {
             uint i;
             byte ret = 0;
@@ -428,90 +405,27 @@ namespace libSMP
             return ret;
         }
 
-        public int NumberMessagesToSend
-        {
-            get
-            {
-                return messagesToSend.Count;
-            }
-        }
+        public bool CanRead => false;
 
-        public int NumberMessagesToReceive
-        {
-            get
-            {
-                return receivedMessages.Count;
-            }
-        }
+        public bool CanSeek => false;
 
-        public Message NextReceivedMessage
-        {
-            get
-            {
-                return receivedMessages.Dequeue();
-            }
-        }
+        public bool CanWrite => inter.CanWrite;
 
-        public Message NextSendMessage
-        {
-            get
-            {
-                return messagesToSend.Dequeue();
-            }
-        }
+        public abstract int Length { get; }
 
-        public int NumberRogueBytes
-        {
-            get
-            {
-                return _rogueBytes.Count;
-            }
-        }
-
-        public byte[] RogueBytes
-        {
-            get
-            {
-                byte[] bytes = _rogueBytes.ToArray();
-                _rogueBytes.Clear();
-                return bytes;
-            }
-        }
-
-        public ulong totalRogueBytes
-        {
-            get
-            {
-                return totalRogueByteCount;
-            }
-        }
-
-        public override bool CanRead => NumberMessagesToReceive > 0;
-
-        public override bool CanSeek => false;
-
-        public override bool CanWrite => inter.CanWrite;
-
-        public override int Length => NumberMessagesToReceive;
-
-        public void resetTotalRogueBytes()
-        {
-            totalRogueByteCount = 0;
-        }
-
-        public override void Flush()
+        public void Flush()
         {
             inter.Flush();
         }
 
-        public override Message Read()
-        {
-            return NextReceivedMessage;
-        }
-
-        public override void Write(Message m)
+        public void Write(Message m)
         {
             SendData(m.message, m.length);
         }
+
+        protected abstract void frameReceived(List<byte> data);
+        protected abstract void rogueFrameReceived(List<byte> data);
+
+        public abstract Message Read();
     }
 }

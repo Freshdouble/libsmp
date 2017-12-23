@@ -40,13 +40,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ChunkQueu.cs" />
     <Compile Include="ITransmitionInterface.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="PacketStream.cs" />
     <Compile Include="SMP.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SMPOutputBuffer.cs" />
+    <Compile Include="SMPSerialPort.cs" />
     <Compile Include="SynchronousSMP.cs" />
+    <Compile Include="TransmitionInterface.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\libRS\libRS\libRS.csproj">

@@ -1,32 +1,23 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 
 namespace libSMP
 {
-    public class Message
+    public class Message : ReadOnlyCollection<byte>
     {
-        private byte[] _message;
-        private uint _length;
-
-        public Message(byte[] message, uint length)
+        public Message(IList<byte> list) : base(list)
         {
-            _message = new byte[length];
-            Array.Copy(message, 0, _message, 0, length);
-            _length = length;
-        }
-
-        public Message(byte[] message) : this(message, (uint)message.Length)
-        {
-
         }
 
         public byte[] message
         {
             get
             {
-                return _message;
+                return this.ToArray();
             }
         }
 
@@ -34,7 +25,7 @@ namespace libSMP
         {
             get
             {
-                return _length;
+                return (uint)Count;
             }
         }
     }

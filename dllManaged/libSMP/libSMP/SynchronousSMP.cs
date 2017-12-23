@@ -5,15 +5,78 @@ using System.Text;
 
 namespace libSMP
 {
-    public class SynchronousSMP : SMP
+    public class SynchronousSMP : SMPOutputBuffer
     {
-        private SynchronousSMP(bool useRS, ITransmitionInterface inter) : base(useRS, inter)
+        protected class Interface : ITransmitionInterface
         {
+            private ChunkQueu<byte> bytesToSend;
+            private ChunkQueu<byte> bytesReceived;
+
+            public event DataReceivedEvent DataReceived;
+
+            public bool CanRead => BytesAvailable > 0;
+
+            public bool CanWrite => true;
+
+            public int BytesAvailable => bytesReceived.Count;
+
+            public int BytesToSendCount => bytesToSend.Count;
+
+            public Interface()
+            {
+                bytesToSend = new ChunkQueu<byte>();
+                bytesReceived = new ChunkQueu<byte>();
+            }
+
+            public void Flush()
+            {
+                
+            }
+
+            public int Read(byte[] buffer, int offset, int count)
+            {
+                byte[] data = bytesReceived.DequeueChunk(count).ToArray();
+                Array.Copy(data, 0, buffer, offset, data.Length);
+                return data.Length;
+            }
+
+            public void Write(byte[] buffer, int offset, int count)
+            {
+                byte[] data = new byte[count];
+                for (int i = offset; i < (offset + count); i++)
+                {
+                    data[i - offset] = buffer[i];
+                }
+
+                bytesToSend.EnqueuChunk(data);
+            }
+
+            public void addReceivedData(IEnumerable<byte> data)
+            {
+                bytesReceived.EnqueuChunk(data);
+                DataReceived?.Invoke(this, null);
+            }
+
+            public IEnumerable<byte> getDataToSend(int count)
+            {
+                return bytesToSend.DequeueChunk(count);
+            }
         }
 
-        public SynchronousSMP(bool useRS)
-        {
-            this(useRS, this);
+        public SynchronousSMP(bool useRS) : base(useRS, new Interface())
+        {;
         }
+
+        public IEnumerable<byte> getDataToSend(int count)
+        {
+            return ((Interface)inter).getDataToSend(count);
+        }
+
+        public void addReceivedData(IEnumerable<byte> data)
+        {
+            ((Interface)inter).addReceivedData(data);
+        }
+
+        public int DataToSendCount => ((Interface)inter).BytesToSendCount;
     }
 }
