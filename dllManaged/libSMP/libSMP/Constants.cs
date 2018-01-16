@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace libSMP
 {
-    static class Constants
+    public static class Constants
     {
         public static uint FRAMESTART = 0xFF;
         public static uint CRC_POLYNOM = 0xA001;

@@ -213,11 +213,13 @@ namespace libSMP
                         break;
                 }
                 newBuffer[0] = (byte)Constants.FRAMESTART;
-                return (inter.Write(newBuffer, 0, (int)newMessageSize + 1) == (newMessageSize + 1)) ? length : 0;
+                inter.Write(newBuffer, 0, (int)newMessageSize + 1);
+                return length;
             }
             else
             {
-                return (inter.Write(message2, 0, (int)messageSize) == (messageSize)) ? length : 0;
+                inter.Write(message2, 0, (int)messageSize);
+                return length;
             }
         }
 

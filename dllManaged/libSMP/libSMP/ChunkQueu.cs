@@ -6,7 +6,7 @@ using System.Text;
 
 namespace libSMP
 {
-    class ChunkQueu<T> : Queue<T>
+    public class ChunkQueu<T> : Queue<T>
     {
         public IEnumerable<T> DequeueChunk(int chunkSize)
         {

@@ -64,7 +64,7 @@ namespace libSMP
         }
 
         public SMPPolling(bool useRS) : base(useRS, new Interface())
-        {;
+        {
         }
 
         public IEnumerable<byte> getDataToSend(int count)
