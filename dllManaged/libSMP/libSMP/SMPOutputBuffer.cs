@@ -10,6 +10,8 @@ namespace libSMP
         private Queue<Message> messagesReceived;
         private ChunkQueu<byte> rogueBytes;
 
+        public override event EventHandler MessageReceived;
+
         public SMPOutputBuffer(bool useRS, ITransmitionInterface inter) : base(useRS, inter)
         {
             messagesReceived = new Queue<Message>();
@@ -32,6 +34,7 @@ namespace libSMP
         {
             Message m = new Message(data);
             messagesReceived.Enqueue(m);
+            MessageReceived(this, null);
         }
 
         protected override void rogueFrameReceived(List<byte> data)

@@ -30,7 +30,7 @@ namespace libSMP
 
         protected ITransmitionInterface inter;
 
-        public event EventHandler MessageReceived;
+        public abstract event EventHandler MessageReceived;
 
         public SMP(bool useRS, ITransmitionInterface inter)
         {
@@ -291,7 +291,6 @@ namespace libSMP
                         {
                             //Data ready
                             frameReceived(fifo);
-                            MessageReceived?.Invoke(this, null);
                         }
                         else //crc doesnt match.
                         {
