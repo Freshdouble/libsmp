@@ -50,6 +50,7 @@
     <Compile Include="SMPOutputBuffer.cs" />
     <Compile Include="SMPSerialPort.cs" />
     <Compile Include="SMPPolling.cs" />
+    <Compile Include="SMPStream.cs" />
     <Compile Include="TransmitionInterface.cs" />
   </ItemGroup>
   <ItemGroup>
