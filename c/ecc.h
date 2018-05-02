@@ -59,7 +59,7 @@ extern "C"
 #define TRUE 1
 #define FALSE 0
 
-#include <inttypes.h>
+#include <stdint.h>
 
 typedef uint32_t BIT32;
 typedef uint16_t BIT16;
