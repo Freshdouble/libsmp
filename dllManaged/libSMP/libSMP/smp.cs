@@ -7,6 +7,25 @@ using libRS;
 
 namespace libSMP
 {
+    public enum RejectReason
+    {
+        NoFrame,
+        CRCError,
+        RepeatedFramestart
+    }
+
+    public class RogueFrameReceivedEventArgs : EventArgs
+    {
+        public RogueFrameReceivedEventArgs(List<byte> message, RejectReason reason)
+        {
+            Message = message;
+            Reason = reason;
+        }
+
+        public List<byte> Message { get; private set; }
+        public RejectReason Reason { get; private set; }
+    }
+
     public abstract class SMP : IPacketStream
     {
         private struct Flags_s
@@ -31,6 +50,9 @@ namespace libSMP
         protected ITransmitionInterface inter;
 
         public abstract event EventHandler MessageReceived;
+        public event EventHandler RogueMessageReceived;
+
+        private ulong rogueByteCount;
 
         public SMP(bool useRS, ITransmitionInterface inter)
         {
@@ -243,7 +265,7 @@ namespace libSMP
             //State machine
             {
                 case 0: //Idle State Waiting for Framestart
-                    rogueFrameReceived(new List<byte>() { data });
+                    rogueFrameReceived(new List<byte>() { data }, RejectReason.NoFrame);
                     break;
                 case 1:
                     if (bytesToRecieve == 0)
@@ -294,7 +316,7 @@ namespace libSMP
                         }
                         else //crc doesnt match.
                         {
-                            rogueFrameReceived(fifo);
+                            rogueFrameReceived(fifo, RejectReason.CRCError);
                         }
                         fifo.Clear();
                     }
@@ -336,7 +358,7 @@ namespace libSMP
                     flags.recievedDelimeter = false;
                     if (flags.recieving)
                     {
-                        rogueFrameReceived(fifo);
+                        rogueFrameReceived(fifo, RejectReason.RepeatedFramestart);
                     }
                     flags.recieving = true;
                 }
@@ -413,6 +435,7 @@ namespace libSMP
         public bool CanWrite => inter.CanWrite;
 
         public abstract int Length { get; }
+        public ulong RogueByteCount { get => rogueByteCount; protected set => rogueByteCount = value; }
 
         public void Flush()
         {
@@ -425,7 +448,11 @@ namespace libSMP
         }
 
         protected abstract void frameReceived(List<byte> data);
-        protected abstract void rogueFrameReceived(List<byte> data);
+        virtual protected void rogueFrameReceived(List<byte> data, RejectReason reason)
+        {
+            RogueByteCount += (ulong)data.Count;
+            RogueMessageReceived?.Invoke(this, new RogueFrameReceivedEventArgs(data, reason));
+        }
 
         public abstract Message Read();
     }

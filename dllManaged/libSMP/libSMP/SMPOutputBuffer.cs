@@ -37,9 +37,10 @@ namespace libSMP
             MessageReceived(this, null);
         }
 
-        protected override void rogueFrameReceived(List<byte> data)
+        protected override void rogueFrameReceived(List<byte> data, RejectReason reason)
         {
             rogueBytes.EnqueuChunk(data);
+            base.rogueFrameReceived(data, reason);
         }
 
         public int RogueDataCount => rogueBytes.Count;
