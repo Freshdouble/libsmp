@@ -26,6 +26,16 @@ namespace libSMP
         public RejectReason Reason { get; private set; }
     }
 
+    public class RawDataReceivedEventArgs : EventArgs
+    {
+        public RawDataReceivedEventArgs(byte[] data)
+        {
+            Data = data;
+        }
+
+        public byte[] Data { get; private set; }
+    }
+
     public abstract class SMP : IPacketStream
     {
         private struct Flags_s
@@ -51,6 +61,9 @@ namespace libSMP
 
         public abstract event EventHandler MessageReceived;
         public event EventHandler RogueMessageReceived;
+
+        public delegate void RawDataReceivedHandler(object sender, RawDataReceivedEventArgs args);
+        public event RawDataReceivedHandler RawDataReceived;
 
         private ulong rogueByteCount;
 
@@ -80,7 +93,7 @@ namespace libSMP
             byte[] buffer = new byte[bytesToRead];
 
             inter.Read(buffer, 0, bytesToRead);
-
+            RawDataReceived?.Invoke(this, new RawDataReceivedEventArgs(buffer));
             RecieveInBytes(buffer, (uint)buffer.Length);
         }
 
