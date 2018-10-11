@@ -49,12 +49,12 @@ namespace libSMP
             {
                 add
                 {
-                    throw new NotImplementedException();
+                    DataReceived += new SerialDataReceivedEventHandler(value);
                 }
 
                 remove
                 {
-                    throw new NotImplementedException();
+                    DataReceived -= new SerialDataReceivedEventHandler(value);
                 }
             }
 
