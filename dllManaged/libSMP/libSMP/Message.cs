@@ -28,5 +28,10 @@ namespace libSMP
                 return (uint)Count;
             }
         }
+
+        public override string ToString()
+        {
+            return Encoding.UTF8.GetString(this.ToArray());
+        }
     }
 }
