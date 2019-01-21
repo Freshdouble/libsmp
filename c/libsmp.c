@@ -241,6 +241,7 @@ signed char private_SMP_RecieveInByte(byte data, smp_struct_t* st)
             st->crc = crc16(st->crc, data, CRC_POLYNOM);
             break;
         }
+        /* no break */
     case 3:
         if (!st->bytesToRecieve)
         {
