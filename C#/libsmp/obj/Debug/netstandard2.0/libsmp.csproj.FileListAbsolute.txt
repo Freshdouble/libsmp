@@ -1,0 +1,9 @@
+C:\Users\peter\Documents\Projekte\libsmp\C#\libsmp\bin\Debug\netstandard2.0\libsmp.deps.json
+C:\Users\peter\Documents\Projekte\libsmp\C#\libsmp\bin\Debug\netstandard2.0\libsmp.dll
+C:\Users\peter\Documents\Projekte\libsmp\C#\libsmp\bin\Debug\netstandard2.0\libsmp.pdb
+C:\Users\peter\Documents\Projekte\libsmp\C#\libsmp\obj\Debug\netstandard2.0\libsmp.csprojAssemblyReference.cache
+C:\Users\peter\Documents\Projekte\libsmp\C#\libsmp\obj\Debug\netstandard2.0\libsmp.csproj.CoreCompileInputs.cache
+C:\Users\peter\Documents\Projekte\libsmp\C#\libsmp\obj\Debug\netstandard2.0\libsmp.AssemblyInfoInputs.cache
+C:\Users\peter\Documents\Projekte\libsmp\C#\libsmp\obj\Debug\netstandard2.0\libsmp.AssemblyInfo.cs
+C:\Users\peter\Documents\Projekte\libsmp\C#\libsmp\obj\Debug\netstandard2.0\libsmp.dll
+C:\Users\peter\Documents\Projekte\libsmp\C#\libsmp\obj\Debug\netstandard2.0\libsmp.pdb
