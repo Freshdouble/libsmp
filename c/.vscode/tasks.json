@@ -1,0 +1,79 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "Build all",
+            "command": "make",
+            "args": [],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "type": "shell",
+            "label": "build tests",
+            "command": "make",
+            "args": [
+                "-C",
+                "${workspaceFolder}"
+            ],
+            "options": {
+                "cwd": "C:\\MinGW\\bin"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "build debughelper",
+            "command": "gcc",
+            "dependsOn": "Build all",
+            "args": [
+                "-g",
+                "-o",
+                "${workspaceFolder}\\Tests\\debughelper",
+                "${workspaceFolder}\\Tests\\debughelper.c",
+                "${workspaceFolder}\\fecmp\\libfecmp.a",
+                "${workspaceFolder}\\libsmp.a"
+            ],
+            "options": {
+                "cwd": "C:\\MinGW\\bin"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "build fectest",
+            "dependsOn": "Build all",
+            "command": "gcc",
+            "args": [
+                "-g",
+                "-o",
+                "${workspaceFolder}\\Tests\\fectest",
+                "${workspaceFolder}\\Tests\\fectest.c",
+                "${workspaceFolder}\\fecmp\\libfecmp.a",
+                "-L../",
+                "-lsmp",
+                "-L../fecmp/",
+                "-lfecmp"
+            ],
+            "options": {
+                "cwd": "C:\\MinGW\\bin"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}

@@ -5,102 +5,121 @@
  
  ******************************************************************************************************/
 
-#ifndef _SMP_H__
-#define _SMP_H__
+#pragma once
+
+#include <inttypes.h>
+#include <stdbool.h>
+#include "sharedlib.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#define FRAMESTART 0xFF	    // The framestartdelimeter
+#define FRAMESTART 0xFF    // The framestartdelimeter
 #define CRC_POLYNOM 0xA001 //CRC Generatorpolynom
-    //Add USE_RS_CODE preprocessor constant to enable RS_Encoding
-
-#ifdef USE_RS_CODE
-#define Blocksize 16UL //define size of one Block, must be smaler than 255
-#if Blocksize > 255
-#error "Maximum Blocksize exeded, use a value smaler than 255"
-#endif // Blocksize
-#define BlockData (Blocksize - NPAR)
-#endif // USE_RS_CODE
-
-#include "libfifo.h"
-
-#ifdef USE_RS_CODE
-#include "ecc.h"
-#endif // USE_RS_CODE
-
-    //Typedefinitions
-#ifndef _INTTYPES_H_
-    typedef unsigned char uint8_t;
-    typedef signed char int8_t;
-#endif
 
     typedef uint8_t byte;
 
-#define SMP_SEND_BUFFER_LENGTH(messageLength) (2*(messageLength + 2) + 5)
+#define SMP_SEND_BUFFER_LENGTH(messageLength) (2 * (messageLength + 2) + 5)
 
     //Callbacks
     //When the callbackfunction returns a negative Integer, its treated as error code.
     //When the length and the bufferpointer is both zero, then this function should return the error Code
-    typedef signed char (*SMP_Frame_Ready)(fifo_t* data); //FrameReadyCallback: Length is the ammount of bytes in the recieveBuffer
+    typedef signed char (*SMP_Frame_Ready)(uint8_t *data, uint32_t length); //FrameReadyCallback: Length is the ammount of bytes in the recieveBuffer
 
-    /**********
-    Sends arbitrary number of bytes over interface.
-    Returns the number of bytes that were sent
-    */
-    typedef unsigned int (*SMP_send_function)(unsigned char * buffer, unsigned int length);
+    /**
+     * stuct to hold the status flags of the decoder
+     * */
+    typedef struct
+    {
+        unsigned int lengthreceived : 1;
+        unsigned int recieving : 1;
+        unsigned int recievedDelimeter : 1;
+        unsigned int decoderstate : 2;
+        unsigned int noCRC : 1;
+        unsigned int padding : 2;
+    } smp_flags_t;
 
+    /**
+     * struct to hold the settings of the smp
+     * */
+    typedef struct
+    {
+        struct
+        {
+            uint8_t *buffer;
+            uint32_t maxlength;
+        } buffer;
+
+        SMP_Frame_Ready frameReadyCallback;
+        SMP_Frame_Ready rogueFrameCallback;
+    } smp_settings_t;
+
+    /**
+     * struct to store the current smpobject
+     * */
     typedef struct
     {
         unsigned short bytesToRecieve;
-        fifo_t* buffer; //Buffersize must match 1 Byte (sizeof(uint8_t))
-        SMP_Frame_Ready frameReadyCallback;
-        SMP_Frame_Ready rogueFrameCallback;
-
         unsigned char crcHighByte;
         unsigned short crc;
-        struct
-        {
-unsigned int recieving :
-            1;
-unsigned int recievedDelimeter :
-            1;
-unsigned int status :
-            2;
-unsigned int noCRC :
-            1;
-        }
-        flags;
+        smp_flags_t flags;
+        uint8_t *writePtr;
+    } smp_status_t;
 
-#ifdef USE_RS_CODE
+    typedef struct
+    {
+        smp_settings_t settings;
+        smp_status_t status;
+    } smp_struct_t;
 
-        unsigned char rsBuffer[Blocksize];
-        unsigned short rsPtr;
-        ecc_t* ecc;
-#endif // USE_RS_CODE
-
-    }
-    smp_struct_t;
+    /***********************************************************/
+    /**
+     * This functions only exist when the library was compiled with the CREATE_ALLOC_LAYER option
+     * This functions are not compiled for the cross compile arm static library scince this
+     * build is intended for µC use
+     */
+    MODULE_API smp_struct_t *SMP_BuildObject(uint32_t bufferlength, SMP_Frame_Ready frameReadyCallback, SMP_Frame_Ready rogueFrameCallback);
+    MODULE_API void SMP_DestroyObject(smp_struct_t *st);
+    /**********************************************************/
 
     //Application functions
-    signed char SMP_Init(smp_struct_t* st);
-    unsigned int SMP_estimatePacketLength(const byte* buffer, unsigned short length);
-    unsigned int SMP_Send(const byte *buffer, unsigned short length, byte* messageBuffer, unsigned short bufferLength, byte** messageStartPtr);
+    signed char SMP_Init(smp_struct_t *st, smp_settings_t *settings);
+    MODULE_API uint32_t SMP_estimatePacketLength(const byte *buffer, unsigned short length);
+    MODULE_API uint32_t SMP_CalculateMinimumSendBufferSize(unsigned short length);
+    MODULE_API unsigned int SMP_SendRetIndex(const byte *buffer, unsigned short length, byte *messageBuffer, unsigned short bufferLength, unsigned short *messageStartIndex);
+    MODULE_API unsigned int SMP_Send(const byte *buffer, unsigned short length, byte *messageBuffer, unsigned short bufferLength, byte **messageStartPtr);
+
+    MODULE_API uint16_t SMP_PacketGetLength(const byte *data, uint16_t *headerlength);
+    MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_t headerlength, uint16_t* crclength);
+
     /**
      * When one recievefunction returns an error, the error code should be parsed.
      * To avoid a buffer overflow it is recomended that no data is sent to the reciever until the error is cleared.
      * If an error is returned it is not sure that the data recieved the reciever.
      */
-    signed char SMP_RecieveInBytes(const byte* data, unsigned int length, smp_struct_t* st);
-    signed char SMP_RecieveInByte(const byte data, smp_struct_t* st);
-    byte SMP_GetBytesToRecieve(smp_struct_t* st);
-    byte SMP_IsRecieving(smp_struct_t* st);
-    signed char SMP_getRecieverError(void);
+    MODULE_API signed char SMP_RecieveInBytes(const byte *data, uint32_t length, smp_struct_t *st);
+    MODULE_API signed char SMP_RecieveInByte(const byte data, smp_struct_t *st);
+    MODULE_API uint32_t SMP_GetBytesToRecieve(smp_struct_t *st);
+    MODULE_API bool SMP_IsRecieving(smp_struct_t *st);
+    MODULE_API signed char SMP_getRecieverError(void);
+
+    MODULE_API static inline uint8_t* SMP_GetBuffer(smp_struct_t *st)
+    {
+        return st->settings.buffer.buffer;
+    }
+
+    MODULE_API static inline uint16_t SMP_LastReceivedMessageLength(smp_struct_t *st)
+    {
+        return st->status.writePtr - st->settings.buffer.buffer;
+    }
+
+    /**
+     * This functions are for internal use only
+     * */
+    void SMP_ResetDecoderState(smp_struct_t *smp, bool preserveReceivedDelimeter);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif // _SMP_H__
