@@ -1,5 +1,6 @@
 #include "libfecmp.h"
 #include <string.h>
+#include <stdlib.h>
 #ifndef NOASSERT
 #include <assert.h>
 #endif
@@ -24,7 +25,6 @@ static inline bool checkHeaderChecksum(uint8_t *header, uint8_t receivedchecksum
 
 static bool calculateCorrelation(uint8_t data, libfecmp_t *lf)
 {
-    const uint8_t highbytemask = 0x1F;
     uint8_t highbyte = lf->status.lastCorrelationByte;
     lf->status.lastCorrelationByte = data;
     //Exor the received code with the inverted barker code
@@ -60,7 +60,56 @@ static void resetDecoderstate(libfecmp_t *lf)
     lf->status.lastCorrelationByte = ~barkercode[0]; //Initialize with inverted barker for minmal correlation on the first byte
 }
 
-int fec_Init(libfecmp_t *lf, const libfecmp_settings_t *settings)
+#ifdef CREATE_ALLOC_LAYER
+/**
+ * @brief Creates a new instance of the fec transceiver
+ * */
+MODULE_API libfecmp_t* fec_CreateInstance(uint32_t bufferlength, SMP_Frame_Ready frameready)
+{
+    uint8_t* buffer = malloc(bufferlength);
+    if(buffer != 0)
+    {
+        libfecmp_t* instance = malloc(sizeof(libfecmp_t));
+        if(instance != 0)
+        {
+            libfecmp_settings_t settings;
+            settings.bufferlength = bufferlength;
+            settings.data = buffer;
+            settings.frameReadyCallback = frameready;
+            if(fec_Init(instance, &settings) < 0)
+            {
+                free(buffer);
+                free(instance);
+            }
+            else
+            {
+                return instance;
+            }  
+        }
+        else
+        {
+            free(buffer);
+        }
+    }
+    return 0;
+}
+
+/**
+ * @brief Destroy a instance of the fec transceiver
+ * This function only works on instances created with the fec_CreateInstance function.
+ * The instance must not be used after calling this function
+ * */
+MODULE_API void fec_DestroyInstance(libfecmp_t *lf)
+{
+    free(lf->settings.data);
+    free(lf);
+}
+#endif
+
+/**
+ * @brief Initialize the fec instance
+ * */
+MODULE_API int fec_Init(libfecmp_t *lf, const libfecmp_settings_t *settings)
 {
     resetDecoderstate(lf);
     memcpy(&lf->settings, settings, sizeof(libfecmp_settings_t));
@@ -81,7 +130,15 @@ int fec_Init(libfecmp_t *lf, const libfecmp_settings_t *settings)
     return 0;
 }
 
-int fec_encode(const uint8_t *msg, uint32_t msglength, uint8_t *packet, uint32_t maxpacketlength, uint8_t **startptr, libfecmp_t *lf)
+/**
+ * @brief Creates a fec paket from the input data
+ * The message msg with the length msglength is wrapped into a fec packet
+ * the packet is then filled into the packet buffer if the packet is shorter than maxpacketlength.
+ * Maxpacketlength should be set to the length of the packet buffer.
+ * The packet is valid if this function returns a value bigger than 0 and startptr is set to the start of the packet.
+ * @return Length of the encoded packet
+ * */
+MODULE_API int fec_encode(const uint8_t *msg, uint32_t msglength, uint8_t *packet, uint32_t maxpacketlength, uint8_t **startptr, libfecmp_t *lf)
 {
     if ((CALC_BLOCKS(msglength, BLOCKSIZE) + 1) * BLOCKSIZE + sizeof(barkercode) > maxpacketlength)
     {
@@ -190,9 +247,14 @@ static inline void gotoPayloadreception(libfecmp_t *lf, uint16_t blockcount)
     lf->status.blockcount = blockcount;
 }
 
-static void fec_processByte(uint8_t data, libfecmp_t *lf)
+/**
+ * @brief Process a single byte.
+ * This function returns a value > 0 if a packet was received.
+ * The returnvalue is the same as from SMP_RecieveInByte
+ * */
+MODULE_API int fec_processByte(uint8_t data, libfecmp_t *lf)
 {
-    bool valid;
+    int ret = 0;
     bool wasreceiving;
     uint16_t blocklength;
     switch (lf->status.flags.decoderstate)
@@ -248,7 +310,7 @@ static void fec_processByte(uint8_t data, libfecmp_t *lf)
             else
             {
                 lf->status.flags.decoderstate = 0; // The block was not valid. However it could still be a smp packet
-                SMP_RecieveInBytes(lf->settings.data, HEADER_BLOCK_LENGTH, &lf->smp);
+                ret = SMP_RecieveInBytes(lf->settings.data, HEADER_BLOCK_LENGTH, &lf->smp);
             }
         }
         break;
@@ -273,7 +335,6 @@ static void fec_processByte(uint8_t data, libfecmp_t *lf)
             uint8_t *dataptr = lf->settings.data + PAYLOAD_OFFSET;
             uint8_t *fecptr = lf->settings.data + PAYLOAD_OFFSET + (DATA_PER_BLOCK * (lf->status.blockcount - 1) + lf->status.datainlastblock);
             uint8_t currentblock[BLOCKSIZE];
-            valid = true;
             SMP_ResetDecoderState(&lf->smp, false);
             //Iterate over all blocks
             for (uint16_t i = 0; i < lf->status.blockcount - 1; i++)
@@ -288,7 +349,7 @@ static void fec_processByte(uint8_t data, libfecmp_t *lf)
                         memcpy(dataptr, currentblock, DATA_PER_BLOCK);
                     }
                 }
-                SMP_RecieveInBytes(currentblock, DATA_PER_BLOCK, &lf->smp);
+                ret = SMP_RecieveInBytes(currentblock, DATA_PER_BLOCK, &lf->smp);
                 dataptr += DATA_PER_BLOCK;
                 fecptr += NPAR;
             }
@@ -305,15 +366,19 @@ static void fec_processByte(uint8_t data, libfecmp_t *lf)
                         memcpy(dataptr, currentblock, lf->status.datainlastblock);
                     }
                 }
-                SMP_RecieveInBytes(currentblock, lf->status.datainlastblock, &lf->smp);
+                ret = SMP_RecieveInBytes(currentblock, lf->status.datainlastblock, &lf->smp);
             }
             lf->status.flags.decoderstate = 0;
         }
         break;
     }
+    return ret;
 }
 
-void fec_processBytes(uint8_t *data, uint32_t length, libfecmp_t *lf)
+/**
+ * @brief Process length bytes in data
+ * */
+MODULE_API void fec_processBytes(uint8_t *data, uint32_t length, libfecmp_t *lf)
 {
     for (uint32_t i = 0; i < length; i++)
     {

@@ -54,22 +54,31 @@ void SMP_ResetDecoderState(smp_struct_t *smp, bool preserveReceivedDelimeter)
 }
 
 #ifdef CREATE_ALLOC_LAYER
-MODULE_API smp_struct_t *SMP_AllocateInit(smp_settings_t *settings)
+MODULE_API smp_struct_t *SMP_BuildObject(uint32_t bufferlength, SMP_Frame_Ready frameReadyCallback, SMP_Frame_Ready rogueFrameCallback)
 {
-    if (settings == 0)
+    uint8_t* buffer = malloc(sizeof(uint8_t) * bufferlength);
+    if(buffer != 0)
     {
-        return 0;
+        smp_struct_t* instance = malloc(sizeof(smp_struct_t));
+        if(instance != 0)
+        {
+            instance->settings.buffer.buffer = buffer;
+            instance->settings.buffer.maxlength = sizeof(uint8_t) * bufferlength;
+            instance->settings.frameReadyCallback = frameReadyCallback;
+            instance->settings.rogueFrameCallback = rogueFrameCallback;
+            return instance;
+        }
+        else
+        {
+            free(buffer);
+        }
     }
-    smp_struct_t *ret = malloc(sizeof(smp_struct_t));
-    if (ret != 0)
-    {
-        SMP_Init(ret, settings);
-    }
-    return ret;
+    return 0;
 }
 
-MODULE_API void SMP_Destroy(smp_struct_t *st)
+MODULE_API void SMP_DestroyObject(smp_struct_t *st)
 {
+    free(st->settings.buffer.buffer);
     free(st);
 }
 #endif
@@ -105,8 +114,16 @@ MODULE_API uint32_t SMP_estimatePacketLength(const byte *buffer, unsigned short 
         if (buffer[i] == FRAMESTART)
             overheadCounter++;
     }
-    ret = length + overheadCounter + 5;
+    ret = length + overheadCounter + 10;
     return ret;
+}
+
+/**
+ * @brief Calculates the minimum required sendbuffer length for Send function to work properly
+ * */
+MODULE_API uint32_t SMP_CalculateMinimumSendBufferSize(unsigned short length)
+{
+    return 2 * (length + 2) + 5;
 }
 
 /*******************************************
@@ -303,7 +320,7 @@ MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_
 /**
  *  @brief Private function to process the received bytes without the bytestuffing
  * **/
-MODULE_API signed char private_SMP_RecieveInByte(byte data, smp_struct_t *st)
+static int private_SMP_RecieveInByte(byte data, smp_struct_t *st)
 {
     switch (st->status.flags.decoderstate)
     //State machine
@@ -312,6 +329,7 @@ MODULE_API signed char private_SMP_RecieveInByte(byte data, smp_struct_t *st)
         st->status.flags.lengthreceived = 0;
         break;
     case 1:
+        st->status.flags.recieving = 1;
         if (!st->status.flags.lengthreceived)
         {
             st->status.bytesToRecieve = data;
@@ -344,9 +362,7 @@ MODULE_API signed char private_SMP_RecieveInByte(byte data, smp_struct_t *st)
         else if (st->status.bytesToRecieve < 2)
         {
             //This should not happen and indicates an memorycorruption
-            st->status.flags.decoderstate = 0;
-            st->status.bytesToRecieve = 0;
-            st->status.flags.recieving = 0;
+            SMP_ResetDecoderState(st, true);
             return -2;
         }
         break;
@@ -365,20 +381,25 @@ MODULE_API signed char private_SMP_RecieveInByte(byte data, smp_struct_t *st)
                 if (st->settings.frameReadyCallback)
                 {
                     ret = st->settings.frameReadyCallback(st->settings.buffer.buffer, st->status.writePtr - st->settings.buffer.buffer);
+                    if(ret >= 0)
+                    {
+                        ret += 2;
+                    }
                 }
                 else
                 {
-                    ret = -3;
+                    ret = 1;
                 }
+                SMP_ResetDecoderState(st, false);
             }
             else //crc doesnt match.
             {
                 if (st->settings.rogueFrameCallback)
                 {
-                    ret = st->settings.rogueFrameCallback(st->settings.buffer.buffer, st->status.writePtr - st->settings.buffer.buffer);
+                    st->settings.rogueFrameCallback(st->settings.buffer.buffer, st->status.writePtr - st->settings.buffer.buffer);
                 }
+                SMP_ResetDecoderState(st, true);
             }
-            SMP_ResetDecoderState(st, true);
             return ret;
         }
         break;
@@ -393,6 +414,14 @@ MODULE_API signed char private_SMP_RecieveInByte(byte data, smp_struct_t *st)
 /************************************************************************
 * @brief Parser received byte
 * Call this function on every byte received from the interface
+* This function returns a value that indicates errors or if a packet was received:
+* >1: Packet received. The returnvalue is the return value of the callback function + 2
+* 1: Packet received but no callback function specified
+* 0: No action
+* -1: Bufferoverflow when receiving
+* -2: Possible memorycorruption error
+* -3: Reserved
+* -4: CRC Error 
 ************************************************************************/
 MODULE_API signed char SMP_RecieveInByte(byte data, smp_struct_t *st)
 {

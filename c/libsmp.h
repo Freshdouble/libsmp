@@ -9,20 +9,7 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
-
-#ifdef SHAREDLIB
-#ifdef _WIN32
-#ifdef MODULE_API_EXPORTS
-#define MODULE_API __declspec(dllexport)
-#else
-#define MODULE_API __declspec(dllimport)
-#endif
-#else
-#define MODULE_API
-#endif
-#else
-#define MODULE_API
-#endif
+#include "sharedlib.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -93,13 +80,14 @@ extern "C"
      * This functions are not compiled for the cross compile arm static library scince this
      * build is intended for µC use
      */
-    MODULE_API smp_struct_t *SMP_AllocateInit(smp_settings_t *settings);
-    MODULE_API void SMP_Destroy(smp_struct_t *st);
+    MODULE_API smp_struct_t *SMP_BuildObject(uint32_t bufferlength, SMP_Frame_Ready frameReadyCallback, SMP_Frame_Ready rogueFrameCallback);
+    MODULE_API void SMP_DestroyObject(smp_struct_t *st);
     /**********************************************************/
 
     //Application functions
     signed char SMP_Init(smp_struct_t *st, smp_settings_t *settings);
     MODULE_API uint32_t SMP_estimatePacketLength(const byte *buffer, unsigned short length);
+    MODULE_API uint32_t SMP_CalculateMinimumSendBufferSize(unsigned short length);
     MODULE_API unsigned int SMP_SendRetIndex(const byte *buffer, unsigned short length, byte *messageBuffer, unsigned short bufferLength, unsigned short *messageStartIndex);
     MODULE_API unsigned int SMP_Send(const byte *buffer, unsigned short length, byte *messageBuffer, unsigned short bufferLength, byte **messageStartPtr);
 
@@ -116,6 +104,16 @@ extern "C"
     MODULE_API uint32_t SMP_GetBytesToRecieve(smp_struct_t *st);
     MODULE_API bool SMP_IsRecieving(smp_struct_t *st);
     MODULE_API signed char SMP_getRecieverError(void);
+
+    MODULE_API static inline uint8_t* SMP_GetBuffer(smp_struct_t *st)
+    {
+        return st->settings.buffer.buffer;
+    }
+
+    MODULE_API static inline uint16_t SMP_LastReceivedMessageLength(smp_struct_t *st)
+    {
+        return st->status.writePtr - st->settings.buffer.buffer;
+    }
 
     /**
      * This functions are for internal use only
