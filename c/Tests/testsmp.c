@@ -69,6 +69,7 @@ signed char smpdatareceived(uint8_t *data, uint32_t length)
 
 signed char fecdatareceived(uint8_t *data, uint32_t length)
 {
+    return 0;
 }
 
 uint32_t CreateRandomMessage(uint8_t *buffer, uint32_t minmessagelength, uint32_t maxmessagelength)
