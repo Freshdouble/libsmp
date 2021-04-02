@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Projekte\\libsmp\\C#\\libsmp\\libsmp.csproj": {}
+    "D:\\Projekte\\XCodeSuite\\libconnection\\libconnection\\libsmp\\C#\\libsmp\\libsmp.csproj": {}
   },
   "projects": {
-    "D:\\Projekte\\libsmp\\C#\\libsmp\\libsmp.csproj": {
+    "D:\\Projekte\\XCodeSuite\\libconnection\\libconnection\\libsmp\\C#\\libsmp\\libsmp.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Projekte\\libsmp\\C#\\libsmp\\libsmp.csproj",
+        "projectUniqueName": "D:\\Projekte\\XCodeSuite\\libconnection\\libconnection\\libsmp\\C#\\libsmp\\libsmp.csproj",
         "projectName": "libsmp",
-        "projectPath": "D:\\Projekte\\libsmp\\C#\\libsmp\\libsmp.csproj",
+        "projectPath": "D:\\Projekte\\XCodeSuite\\libconnection\\libconnection\\libsmp\\C#\\libsmp\\libsmp.csproj",
         "packagesPath": "C:\\Users\\peter\\.nuget\\packages\\",
-        "outputPath": "D:\\Projekte\\libsmp\\C#\\libsmp\\obj\\",
+        "outputPath": "D:\\Projekte\\XCodeSuite\\libconnection\\libconnection\\libsmp\\C#\\libsmp\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
