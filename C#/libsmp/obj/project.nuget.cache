@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "1IEQED5gfO6OLUc/XeFX/khoICjgMddusUZhme8IAQE8QjKAHMBGtH/iQVRz//xoRqQR36c9lGxn59jQmazMow==",
+  "dgSpecHash": "6+zly/vGzk84fAOuMNRWJGLHF2ghGSw441lIixZvHCVrqw5TKYCPUBh+n7WPI6ack+tQfduRW8WWLkpqzcMVwA==",
   "success": true,
-  "projectFilePath": "D:\\Projekte\\libsmp\\C#\\libsmp\\libsmp.csproj",
+  "projectFilePath": "D:\\Projekte\\XCodeSuite\\libconnection\\libconnection\\libsmp\\C#\\libsmp\\libsmp.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\peter\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
     "C:\\Users\\peter\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512"
