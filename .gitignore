@@ -375,3 +375,6 @@ dllManaged/libSMP/libSMP/obj/
 dllManaged/libSMP/smpTest/bin/
 dllManaged/libSMP/smpTest/obj/
 dllManaged/libSMP/\.vs/libSMP/v15/
+
+C#/libsmp/bin/
+C#/libsmp/obj/
