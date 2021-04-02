@@ -180,28 +180,36 @@
     ]
   },
   "packageFolders": {
-    "/home/peter/.nuget/packages/": {}
+    "C:\\Users\\peter\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/peter/Dokumente/Projekte/libsmp/C#/libsmp/libsmp.csproj",
+      "projectUniqueName": "D:\\Projekte\\libsmp\\C#\\libsmp\\libsmp.csproj",
       "projectName": "libsmp",
-      "projectPath": "/home/peter/Dokumente/Projekte/libsmp/C#/libsmp/libsmp.csproj",
-      "packagesPath": "/home/peter/.nuget/packages/",
-      "outputPath": "/home/peter/Dokumente/Projekte/libsmp/C#/libsmp/obj/",
+      "projectPath": "D:\\Projekte\\libsmp\\C#\\libsmp\\libsmp.csproj",
+      "packagesPath": "C:\\Users\\peter\\.nuget\\packages\\",
+      "outputPath": "D:\\Projekte\\libsmp\\C#\\libsmp\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "/home/peter/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\peter\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "netstandard2.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "netstandard2.0": {
+          "targetAlias": "netstandard2.0",
           "projectReferences": {}
         }
       },
@@ -213,6 +221,7 @@
     },
     "frameworks": {
       "netstandard2.0": {
+        "targetAlias": "netstandard2.0",
         "dependencies": {
           "NETStandard.Library": {
             "suppressParent": "All",
@@ -231,7 +240,7 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "runtimeIdentifierGraphPath": "/home/peter/dotnet/sdk/3.1.201/RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.201\\RuntimeIdentifierGraph.json"
       }
     }
   }

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "UeTFSnDD0tAaCTWBiXvOoZc80jE08DO8kVrsVxga18zFuH+FPek8CD7NSEffd0lKb00fmXnXl0Uk+ydMFWeGbA==",
+  "dgSpecHash": "kcA9qmaseI6ua35eFckV3xn0ivhTd3///3Hpd6CNW/fT39a7uR86bW51DmvNl2oNeRaEXGBYCkETwyNoleiGLw==",
   "success": true,
-  "projectFilePath": "/home/peter/Dokumente/Projekte/libsmp/C#/Test/Test.csproj",
+  "projectFilePath": "D:\\Projekte\\libsmp\\C#\\Test\\Test.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

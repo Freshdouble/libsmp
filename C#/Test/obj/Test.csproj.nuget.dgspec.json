@@ -1,83 +1,36 @@
 {
   "format": 1,
   "restore": {
-    "/home/peter/Dokumente/Projekte/libsmp/C#/Test/Test.csproj": {}
+    "D:\\Projekte\\libsmp\\C#\\Test\\Test.csproj": {}
   },
   "projects": {
-    "/home/peter/Dokumente/Projekte/libsmp/C#/Test/Test.csproj": {
+    "D:\\Projekte\\libsmp\\C#\\libsmp\\libsmp.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/peter/Dokumente/Projekte/libsmp/C#/Test/Test.csproj",
-        "projectName": "Test",
-        "projectPath": "/home/peter/Dokumente/Projekte/libsmp/C#/Test/Test.csproj",
-        "packagesPath": "/home/peter/.nuget/packages/",
-        "outputPath": "/home/peter/Dokumente/Projekte/libsmp/C#/Test/obj/",
-        "projectStyle": "PackageReference",
-        "configFilePaths": [
-          "/home/peter/.nuget/NuGet/NuGet.Config"
-        ],
-        "originalTargetFrameworks": [
-          "netcoreapp3.1"
-        ],
-        "sources": {
-          "https://api.nuget.org/v3/index.json": {}
-        },
-        "frameworks": {
-          "netcoreapp3.1": {
-            "projectReferences": {
-              "/home/peter/Dokumente/Projekte/libsmp/C#/libsmp/libsmp.csproj": {
-                "projectPath": "/home/peter/Dokumente/Projekte/libsmp/C#/libsmp/libsmp.csproj"
-              }
-            }
-          }
-        },
-        "warningProperties": {
-          "warnAsError": [
-            "NU1605"
-          ]
-        }
-      },
-      "frameworks": {
-        "netcoreapp3.1": {
-          "imports": [
-            "net461",
-            "net462",
-            "net47",
-            "net471",
-            "net472",
-            "net48"
-          ],
-          "assetTargetFallback": true,
-          "warn": true,
-          "frameworkReferences": {
-            "Microsoft.NETCore.App": {
-              "privateAssets": "all"
-            }
-          },
-          "runtimeIdentifierGraphPath": "/home/peter/dotnet/sdk/3.1.201/RuntimeIdentifierGraph.json"
-        }
-      }
-    },
-    "/home/peter/Dokumente/Projekte/libsmp/C#/libsmp/libsmp.csproj": {
-      "version": "1.0.0",
-      "restore": {
-        "projectUniqueName": "/home/peter/Dokumente/Projekte/libsmp/C#/libsmp/libsmp.csproj",
+        "projectUniqueName": "D:\\Projekte\\libsmp\\C#\\libsmp\\libsmp.csproj",
         "projectName": "libsmp",
-        "projectPath": "/home/peter/Dokumente/Projekte/libsmp/C#/libsmp/libsmp.csproj",
-        "packagesPath": "/home/peter/.nuget/packages/",
-        "outputPath": "/home/peter/Dokumente/Projekte/libsmp/C#/libsmp/obj/",
+        "projectPath": "D:\\Projekte\\libsmp\\C#\\libsmp\\libsmp.csproj",
+        "packagesPath": "C:\\Users\\peter\\.nuget\\packages\\",
+        "outputPath": "D:\\Projekte\\libsmp\\C#\\libsmp\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "/home/peter/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\peter\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "netstandard2.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "netstandard2.0": {
+            "targetAlias": "netstandard2.0",
             "projectReferences": {}
           }
         },
@@ -89,6 +42,7 @@
       },
       "frameworks": {
         "netstandard2.0": {
+          "targetAlias": "netstandard2.0",
           "dependencies": {
             "NETStandard.Library": {
               "suppressParent": "All",
@@ -107,7 +61,69 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "runtimeIdentifierGraphPath": "/home/peter/dotnet/sdk/3.1.201/RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.201\\RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\Projekte\\libsmp\\C#\\Test\\Test.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Projekte\\libsmp\\C#\\Test\\Test.csproj",
+        "projectName": "Test",
+        "projectPath": "D:\\Projekte\\libsmp\\C#\\Test\\Test.csproj",
+        "packagesPath": "C:\\Users\\peter\\.nuget\\packages\\",
+        "outputPath": "D:\\Projekte\\libsmp\\C#\\Test\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\peter\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "netcoreapp3.1"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netcoreapp3.1": {
+            "targetAlias": "netcoreapp3.1",
+            "projectReferences": {
+              "D:\\Projekte\\libsmp\\C#\\libsmp\\libsmp.csproj": {
+                "projectPath": "D:\\Projekte\\libsmp\\C#\\libsmp\\libsmp.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netcoreapp3.1": {
+          "targetAlias": "netcoreapp3.1",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.201\\RuntimeIdentifierGraph.json"
         }
       }
     }

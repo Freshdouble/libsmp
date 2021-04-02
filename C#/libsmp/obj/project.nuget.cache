@@ -1,11 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "3SUhwes/4IgnX6rNkRL2JZe/2mO9HVxwWPEnZnKoSzvRLsO/HG04VFyR4ABFfAo4IHJ4KPy8huo016NQ2GyvaA==",
+  "dgSpecHash": "1IEQED5gfO6OLUc/XeFX/khoICjgMddusUZhme8IAQE8QjKAHMBGtH/iQVRz//xoRqQR36c9lGxn59jQmazMow==",
   "success": true,
-  "projectFilePath": "/home/peter/Dokumente/Projekte/libsmp/C#/libsmp/libsmp.csproj",
+  "projectFilePath": "D:\\Projekte\\libsmp\\C#\\libsmp\\libsmp.csproj",
   "expectedPackageFiles": [
-    "/home/peter/.nuget/packages/microsoft.netcore.platforms/1.1.0/microsoft.netcore.platforms.1.1.0.nupkg.sha512",
-    "/home/peter/.nuget/packages/netstandard.library/2.0.3/netstandard.library.2.0.3.nupkg.sha512"
+    "C:\\Users\\peter\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\peter\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512"
   ],
   "logs": []
 }
