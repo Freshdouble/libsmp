@@ -2,9 +2,9 @@
  File: libsmp
  Autor: Peter Kremsner
  Date: 12.9.2014
- 
+
  Basic data transmission protocoll to ensure data integrity
- 
+
  ******************************************************************************************************/
 #include "libsmp.h"
 #include <string.h>
@@ -15,7 +15,7 @@
 
 #define MAX_PAYLOAD 65534
 
-//Helper macro to get the size of a nested struct
+// Helper macro to get the size of a nested struct
 #define sizeof_field(s, m) (sizeof((((s *)0)->m)))
 
 /***********************************************************************
@@ -41,13 +41,13 @@ static unsigned int crc16(unsigned int crc, unsigned int c, unsigned int mask)
 void SMP_ResetDecoderState(smp_struct_t *smp, bool preserveReceivedDelimeter)
 {
     bool receivedDelimeter = false;
-    if(preserveReceivedDelimeter)
+    if (preserveReceivedDelimeter)
     {
         receivedDelimeter = smp->status.flags.recievedDelimeter;
     }
     memset(&smp->status, 0, sizeof(smp_status_t));
     smp->status.writePtr = smp->settings.buffer.buffer;
-    if(preserveReceivedDelimeter)
+    if (preserveReceivedDelimeter)
     {
         smp->status.flags.recievedDelimeter = receivedDelimeter;
     }
@@ -56,11 +56,11 @@ void SMP_ResetDecoderState(smp_struct_t *smp, bool preserveReceivedDelimeter)
 #ifdef CREATE_ALLOC_LAYER
 MODULE_API smp_struct_t *SMP_BuildObject(uint32_t bufferlength, SMP_Frame_Ready frameReadyCallback, SMP_Frame_Ready rogueFrameCallback)
 {
-    uint8_t* buffer = malloc(sizeof(uint8_t) * bufferlength);
-    if(buffer != 0)
+    uint8_t *buffer = malloc(sizeof(uint8_t) * bufferlength);
+    if (buffer != 0)
     {
-        smp_struct_t* instance = malloc(sizeof(smp_struct_t));
-        if(instance != 0)
+        smp_struct_t *instance = malloc(sizeof(smp_struct_t));
+        if (instance != 0)
         {
             instance->settings.buffer.buffer = buffer;
             instance->settings.buffer.maxlength = sizeof(uint8_t) * bufferlength;
@@ -84,13 +84,13 @@ MODULE_API void SMP_DestroyObject(smp_struct_t *st)
 #endif
 
 /************************************************************************
- * @brief Initialize the smp-buffers 
+ * @brief Initialize the smp-buffers
  ************************************************************************/
 signed char SMP_Init(smp_struct_t *st, smp_settings_t *settings)
 {
     SMP_ResetDecoderState(st, false);
     if (settings != 0)
-        memcpy(st, settings, sizeof(smp_settings_t)); //Copy the settings if they are passed to this function
+        memcpy(st, settings, sizeof(smp_settings_t)); // Copy the settings if they are passed to this function
     return 0;
 }
 
@@ -123,7 +123,7 @@ MODULE_API uint32_t SMP_estimatePacketLength(const byte *buffer, unsigned short 
  * */
 MODULE_API uint32_t SMP_CalculateMinimumSendBufferSize(unsigned short length)
 {
-    return 2 * (length + 2) + 5;
+    return MINIMUM_SMP_BUFFERLENGTH(length);
 }
 
 /*******************************************
@@ -142,13 +142,13 @@ MODULE_API unsigned int SMP_SendRetIndex(const byte *buffer, unsigned short leng
     return ret;
 }
 
-/************************************************************************      
+/************************************************************************
  * @brief Sends data to the smp outputbuffer
  * Create a smp packet from the data in buffer and writes it into messageBuffer
  * messageStartPtr points to the start of the smppacket
  * @return The length of the whole smp packet. If this value is zero an error
  *          occured and messageStartPtr is not valid
-************************************************************************/
+ ************************************************************************/
 MODULE_API unsigned int SMP_Send(const byte *buffer, unsigned short length, byte *messageBuffer, unsigned short bufferLength, byte **messageStartPtr)
 {
     unsigned int i = 2;
@@ -177,13 +177,13 @@ MODULE_API unsigned int SMP_Send(const byte *buffer, unsigned short length, byte
         crc = crc16(crc, buffer[i], CRC_POLYNOM);
     }
 
-    messagePtr[i + offset] = crc >> 8; //CRC high byte
+    messagePtr[i + offset] = crc >> 8; // CRC high byte
     if (messagePtr[i + offset] == FRAMESTART)
     {
         offset++;
         messagePtr[i + offset] = FRAMESTART;
     }
-    messagePtr[i + offset + 1] = crc & 0xFF; //CRC low byte
+    messagePtr[i + offset + 1] = crc & 0xFF; // CRC low byte
     if (messagePtr[i + offset + 1] == FRAMESTART)
     {
         offset++;
@@ -239,10 +239,10 @@ MODULE_API inline signed char SMP_RecieveInBytes(const byte *data, uint32_t leng
     return ret;
 }
 
-MODULE_API uint16_t SMP_PacketGetLength(const byte *data, uint16_t* headerlength)
+MODULE_API uint16_t SMP_PacketGetLength(const byte *data, uint16_t *headerlength)
 {
-    uint16_t protocolbytecounter = 1; //Initialize with 1 we count the framestart here
-    const uint8_t *lengthptr = data + 1; //Skip Framestart
+    uint16_t protocolbytecounter = 1;    // Initialize with 1 we count the framestart here
+    const uint8_t *lengthptr = data + 1; // Skip Framestart
     uint16_t length = *lengthptr;
     protocolbytecounter++;
     if (*lengthptr == FRAMESTART)
@@ -262,24 +262,24 @@ MODULE_API uint16_t SMP_PacketGetLength(const byte *data, uint16_t* headerlength
         if (*lengthptr != FRAMESTART)
             return 0;
     }
-    if(headerlength)
+    if (headerlength)
     {
         *headerlength = protocolbytecounter;
     }
     return length;
 }
 
-MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_t headerlength, uint16_t* crclength)
+MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_t headerlength, uint16_t *crclength)
 {
     uint16_t crc = 0;
     uint16_t crccount = 0;
     const uint8_t *payload = data + headerlength;
-    //We only need to check the checksum to validate the data integrety
+    // We only need to check the checksum to validate the data integrety
     uint16_t payloadlength = packetlength - headerlength;
     for (uint16_t i = 0; i < payloadlength - 2; i++)
     {
         crc = crc16(crc, *payload, CRC_POLYNOM);
-        if(*payload == FRAMESTART)
+        if (*payload == FRAMESTART)
         {
             payload++;
         }
@@ -293,7 +293,7 @@ MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_
         crccount++;
         if (*payload != FRAMESTART)
         {
-            //Bytestufferror
+            // Bytestufferror
             return false;
         }
         payload++;
@@ -306,11 +306,11 @@ MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_
         payload++;
         if (*payload != FRAMESTART)
         {
-            //Bytestufferror
+            // Bytestufferror
             return false;
         }
     }
-    if(crclength)
+    if (crclength)
     {
         *crclength = crccount;
     }
@@ -323,9 +323,9 @@ MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_
 static int private_SMP_RecieveInByte(byte data, smp_struct_t *st)
 {
     switch (st->status.flags.decoderstate)
-    //State machine
+    // State machine
     {
-    case 0: //Idle State Waiting for Framestart
+    case 0: // Idle State Waiting for Framestart
         st->status.flags.lengthreceived = 0;
         break;
     case 1:
@@ -347,21 +347,21 @@ static int private_SMP_RecieveInByte(byte data, smp_struct_t *st)
         st->status.bytesToRecieve--;
         if (st->status.writePtr >= (st->settings.buffer.buffer + st->settings.buffer.maxlength))
         {
-            //We have a bufferoverflow
+            // We have a bufferoverflow
             st->status.flags.decoderstate = 0;
             st->status.flags.recieving = 0;
-            return -1; //Show error by returning -1
+            return -1; // Show error by returning -1
         }
         *st->status.writePtr = data;
         st->status.writePtr++;
         st->status.crc = crc16(st->status.crc, data, CRC_POLYNOM);
-        if (st->status.bytesToRecieve == 2) //If we only have two bytes to receive we switch to the reception of the crc data
+        if (st->status.bytesToRecieve == 2) // If we only have two bytes to receive we switch to the reception of the crc data
         {
             st->status.flags.decoderstate = 3;
         }
         else if (st->status.bytesToRecieve < 2)
         {
-            //This should not happen and indicates an memorycorruption
+            // This should not happen and indicates an memorycorruption
             SMP_ResetDecoderState(st, true);
             return -2;
         }
@@ -369,19 +369,19 @@ static int private_SMP_RecieveInByte(byte data, smp_struct_t *st)
     case 3:
         if (st->status.bytesToRecieve)
         {
-            st->status.crcHighByte = data; //At first we save the high byte of the transmitted crc
-            st->status.bytesToRecieve = 0; //Set bytestoReceive to 0 to signal the receiving of the last byte
+            st->status.crcHighByte = data; // At first we save the high byte of the transmitted crc
+            st->status.bytesToRecieve = 0; // Set bytestoReceive to 0 to signal the receiving of the last byte
         }
         else
         {
             unsigned char ret = -4;
-            if (st->status.crc == ((unsigned short)(st->status.crcHighByte << 8) | data)) //Read the crc and compare
+            if (st->status.crc == ((unsigned short)(st->status.crcHighByte << 8) | data)) // Read the crc and compare
             {
-                //Data ready
+                // Data ready
                 if (st->settings.frameReadyCallback)
                 {
                     ret = st->settings.frameReadyCallback(st->settings.buffer.buffer, st->status.writePtr - st->settings.buffer.buffer);
-                    if(ret >= 0)
+                    if (ret >= 0)
                     {
                         ret += 2;
                     }
@@ -392,7 +392,7 @@ static int private_SMP_RecieveInByte(byte data, smp_struct_t *st)
                 }
                 SMP_ResetDecoderState(st, false);
             }
-            else //crc doesnt match.
+            else // crc doesnt match.
             {
                 if (st->settings.rogueFrameCallback)
                 {
@@ -404,7 +404,7 @@ static int private_SMP_RecieveInByte(byte data, smp_struct_t *st)
         }
         break;
 
-    default: //Invalid State
+    default: // Invalid State
         SMP_ResetDecoderState(st, true);
         return -5;
     }
@@ -412,17 +412,17 @@ static int private_SMP_RecieveInByte(byte data, smp_struct_t *st)
 }
 
 /************************************************************************
-* @brief Parser received byte
-* Call this function on every byte received from the interface
-* This function returns a value that indicates errors or if a packet was received:
-* >1: Packet received. The returnvalue is the return value of the callback function + 2
-* 1: Packet received but no callback function specified
-* 0: No action
-* -1: Bufferoverflow when receiving
-* -2: Possible memorycorruption error
-* -3: Reserved
-* -4: CRC Error 
-************************************************************************/
+ * @brief Parser received byte
+ * Call this function on every byte received from the interface
+ * This function returns a value that indicates errors or if a packet was received:
+ * >1: Packet received. The returnvalue is the return value of the callback function + 2
+ * 1: Packet received but no callback function specified
+ * 0: No action
+ * -1: Bufferoverflow when receiving
+ * -2: Possible memorycorruption error
+ * -3: Reserved
+ * -4: CRC Error
+ ************************************************************************/
 MODULE_API signed char SMP_RecieveInByte(byte data, smp_struct_t *st)
 {
     // Remove the bytestuffing from the data
@@ -448,7 +448,7 @@ MODULE_API signed char SMP_RecieveInByte(byte data, smp_struct_t *st)
                     st->settings.rogueFrameCallback(st->settings.buffer.buffer, st->status.writePtr - st->settings.buffer.buffer);
             }
             SMP_ResetDecoderState(st, false);
-            st->status.flags.decoderstate = 1; //Set the decoder into receive mode
+            st->status.flags.decoderstate = 1; // Set the decoder into receive mode
             st->status.flags.recieving = 1;
         }
         st->status.flags.recievedDelimeter = 0;

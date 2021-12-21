@@ -1,8 +1,8 @@
 /*****************************************************************************************************
- 
+
  Autor: Peter Kremsner
  Date: 12.9.2014
- 
+
  ******************************************************************************************************/
 
 #pragma once
@@ -11,22 +11,28 @@
 #include <stdbool.h>
 #include "sharedlib.h"
 
+/**
+ * @brief Calculate the required size of the smp buffer (worst case) for the supplied maximum message length
+ *
+ */
+#define MINIMUM_SMP_BUFFERLENGTH(maxmessagelength) (2 * (length + 2) + 5)
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
 #define FRAMESTART 0xFF    // The framestartdelimeter
-#define CRC_POLYNOM 0xA001 //CRC Generatorpolynom
+#define CRC_POLYNOM 0xA001 // CRC Generatorpolynom
 
     typedef uint8_t byte;
 
 #define SMP_SEND_BUFFER_LENGTH(messageLength) (2 * (messageLength + 2) + 5)
 
-    //Callbacks
-    //When the callbackfunction returns a negative Integer, its treated as error code.
-    //When the length and the bufferpointer is both zero, then this function should return the error Code
-    typedef signed char (*SMP_Frame_Ready)(uint8_t *data, uint32_t length); //FrameReadyCallback: Length is the ammount of bytes in the recieveBuffer
+    // Callbacks
+    // When the callbackfunction returns a negative Integer, its treated as error code.
+    // When the length and the bufferpointer is both zero, then this function should return the error Code
+    typedef signed char (*SMP_Frame_Ready)(uint8_t *data, uint32_t length); // FrameReadyCallback: Length is the ammount of bytes in the recieveBuffer
 
     /**
      * stuct to hold the status flags of the decoder
@@ -84,7 +90,7 @@ extern "C"
     MODULE_API void SMP_DestroyObject(smp_struct_t *st);
     /**********************************************************/
 
-    //Application functions
+    // Application functions
     signed char SMP_Init(smp_struct_t *st, smp_settings_t *settings);
     MODULE_API uint32_t SMP_estimatePacketLength(const byte *buffer, unsigned short length);
     MODULE_API uint32_t SMP_CalculateMinimumSendBufferSize(unsigned short length);
@@ -92,7 +98,7 @@ extern "C"
     MODULE_API unsigned int SMP_Send(const byte *buffer, unsigned short length, byte *messageBuffer, unsigned short bufferLength, byte **messageStartPtr);
 
     MODULE_API uint16_t SMP_PacketGetLength(const byte *data, uint16_t *headerlength);
-    MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_t headerlength, uint16_t* crclength);
+    MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_t headerlength, uint16_t *crclength);
 
     /**
      * When one recievefunction returns an error, the error code should be parsed.
@@ -105,7 +111,7 @@ extern "C"
     MODULE_API bool SMP_IsRecieving(smp_struct_t *st);
     MODULE_API signed char SMP_getRecieverError(void);
 
-    MODULE_API static inline uint8_t* SMP_GetBuffer(smp_struct_t *st)
+    MODULE_API static inline uint8_t *SMP_GetBuffer(smp_struct_t *st)
     {
         return st->settings.buffer.buffer;
     }
