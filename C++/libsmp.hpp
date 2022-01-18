@@ -5,6 +5,12 @@
 
 #pragma once
 
+/**
+ * @brief Class for the smp receiver and transmitter functions. This is an abstraction from the standard C functions.
+ *
+ * This class generates an internal buffer that is about 2*maxpacketSize bytes big.
+ * The transmit functions use a local version of that buffer on the stack memory, so maxpacketSize has a main impact on the memory consumption.
+ */
 template <size_t maxpacketSize>
 class SMP
 {
@@ -66,7 +72,8 @@ public:
         std::array<uint8_t, BUFFER_SIZE> buf;
         uint8_t *messageStart = 0;
         size_t packetLength = 0;
-        if ((packetLength = SMP_Send(buffer.data(), std::min<size_t>(bytesToSend, buffer.size()), buf.data(), buf.size(), &messageStart)) > length)
+        assert(length >= bytesToSend); //Check if the buffer even has enough space for all bytes to send
+        if ((packetLength = SMP_Send(buffer.data(), std::min<size_t>(bytesToSend, buffer.size()), buf.data(), buf.size(), &messageStart)) > bytesToSend) //Some plausibility check that the transmited data must be larger than the input data
         {
             size_t sentbytes = sendfunc(messageStart, packetLength);
             return sentbytes == packetLength;
