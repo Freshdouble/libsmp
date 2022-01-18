@@ -1,6 +1,7 @@
 #include "libsmp.h"
 #include <array>
 #include <cstdint>
+#include <tuple>
 
 #pragma once
 
@@ -9,7 +10,7 @@ class SMP
 {
 public:
     static const size_t BUFFER_SIZE = MINIMUM_SMP_BUFFERLENGTH(maxpacketSize);
-    static_assert(maxpacketSize <= (numeric_limits<uint16_t>::max() >> 1), "SMP supports only 15bit message size");
+    static_assert(maxpacketSize <= (std::numeric_limits<uint16_t>::max() >> 1), "SMP supports only 15bit message size");
 
     /**
      * @brief Construct a new SMP object.
@@ -40,8 +41,8 @@ public:
     bool SendData(const iterator &start, const iterator &end)
     {
         std::array<uint8_t, maxpacketSize> buf;
-        size_t inputlength = std::distance(start, end);
-        if (inputlength > maxpacketSize)
+        auto inputlength = std::distance(start, end);
+        if (inputlength > maxpacketSize || inputlength < 0)
         {
             return false; // return error if we can not send the full packet
         }
@@ -61,19 +62,42 @@ public:
     template <const size_t length, auto sendfunc>
     bool SendData(const std::array<uint8_t, length> &buffer, const size_t bytesToSend)
     {
-        static_assert(maxpacketSize <= length, "We can not send packages that are larger than the max allowed message size");
+        static_assert(length <= maxpacketSize, "We can not send packages that are larger than the max allowed message size");
         std::array<uint8_t, BUFFER_SIZE> buf;
         uint8_t *messageStart = 0;
         size_t packetLength = 0;
-        if ((packetLength = SMP_Send(buffer.data(), min<size_t>(bytesToSend, buffer.size()), buf.data(), buf.size(), &messageStart)) > length)
+        if ((packetLength = SMP_Send(buffer.data(), std::min<size_t>(bytesToSend, buffer.size()), buf.data(), buf.size(), &messageStart)) > length)
         {
-            size_t sentbytes = sendfunc(buf);
+            size_t sentbytes = sendfunc(messageStart, packetLength);
             return sentbytes == packetLength;
         }
         else
         {
             return false;
         }
+    }
+
+    template<const size_t length>
+    void ReceiveData(const std::array<uint8_t, length> &buffer)
+    {
+    	ReceiveData(buffer.data(), length);
+    }
+
+    void ReceiveData(const uint8_t* data, size_t length)
+    {
+    	SMP_RecieveInBytes(data, static_cast<uint32_t>(length), &smp);
+    }
+
+    constexpr const std::array<uint8_t, BUFFER_SIZE>& GetBuffer()
+    {
+    	return buffer;
+    }
+
+    constexpr auto GetData(const uint8_t* ptr)
+    {
+    	auto dist = std::distance(buffer.data(), ptr);
+    	assert(dist >= 0);
+    	return std::make_tuple(buffer.begin() + dist, buffer.end());
     }
 
 private:

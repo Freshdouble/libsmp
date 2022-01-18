@@ -15,7 +15,7 @@
  * @brief Calculate the required size of the smp buffer (worst case) for the supplied maximum message length
  *
  */
-#define MINIMUM_SMP_BUFFERLENGTH(maxmessagelength) (2 * (length + 2) + 5)
+#define MINIMUM_SMP_BUFFERLENGTH(maxmessagelength) (2 * (maxmessagelength + 2) + 5)
 
 #ifdef __cplusplus
 extern "C"
