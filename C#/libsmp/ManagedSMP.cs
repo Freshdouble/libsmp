@@ -5,10 +5,14 @@ namespace libsmp
 {
     public class ManagedSMP : SMP
     {
+
+        public override uint ReceiveErrors { get; protected set; } = 0;
+        public override uint ReceivedMessages { get; protected set; } = 0;
+
         private uint decoderstate = 0;
         private bool firstLengthbyteReceived = false;
         private uint currentcrc = 0;
-        private List<byte> received = new List<byte>();
+        private readonly List<byte> received = new List<byte>();
         private byte crcHighbyte = 0;
         private bool framestartReceivedLast = false;
         /***********************************************************************
@@ -100,8 +104,10 @@ namespace libsmp
                 payloadBuffer.Add(Framestart);
             }
             int packedLength = payload.Length + 2;
-            var header = new List<byte>();
-            header.Add(Framestart);
+            var header = new List<byte>
+            {
+                Framestart
+            };
             byte lengthbyte = (byte)(packedLength & 0xFF); //Lowbyte
             header.Add(lengthbyte);
             if (lengthbyte == Framestart)
@@ -191,6 +197,7 @@ namespace libsmp
                         if (currentcrc == ((uint)(crcHighbyte << 8) | data)) //Read the crc and compare
                         {
                             //Data ready
+                            ReceivedMessages++;
                             receivedmessages.Enqueue(received.ToArray());
                             Receiving = false;
                             ret = 1;
@@ -203,6 +210,7 @@ namespace libsmp
                             {
                                 Data = received
                             });**/
+                            ReceiveErrors++;
                             Receiving = false;
                             ret = -1;
                             resetDecoderState(true);
@@ -247,6 +255,7 @@ namespace libsmp
                             Data = received
                         });
                         **/
+                        ReceiveErrors++;
                     }
                     resetDecoderState(false);
                     Receiving = true;

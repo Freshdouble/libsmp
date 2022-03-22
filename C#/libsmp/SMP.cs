@@ -5,6 +5,8 @@ namespace libsmp
 {
     public abstract class SMP : ISMP
     {
+        public abstract uint ReceiveErrors { get; protected set; }
+        public abstract uint ReceivedMessages { get; protected set; }
         protected Queue<byte[]> receivedmessages = new Queue<byte[]>();
         public int StoredMessages => receivedmessages.Count;
 
