@@ -225,7 +225,7 @@ MODULE_API unsigned int SMP_Send(const byte *buffer, unsigned short length, byte
  * This function calls SMP_RecieveInByte for every byte in the buffer
  ************************************************************************/
 
-MODULE_API inline signed char SMP_RecieveInBytes(const byte *data, uint32_t length, smp_struct_t *st)
+MODULE_API signed char SMP_RecieveInBytes(const byte *data, uint32_t length, smp_struct_t *st)
 {
     unsigned int i;
     signed char ret = 0;
