@@ -9,10 +9,6 @@
 #include "libsmp.h"
 #include <string.h>
 
-#ifdef CREATE_ALLOC_LAYER
-#include <stdlib.h>
-#endif
-
 #define MAX_PAYLOAD 65534
 
 // Helper macro to get the size of a nested struct
@@ -43,54 +39,20 @@ void SMP_ResetDecoderState(smp_struct_t *smp, bool preserveReceivedDelimeter)
     bool receivedDelimeter = false;
     if (preserveReceivedDelimeter)
     {
-        receivedDelimeter = smp->status.flags.recievedDelimeter;
+        receivedDelimeter = smp->flags.recievedDelimeter;
     }
-    memset(&smp->status, 0, sizeof(smp_status_t));
-    smp->status.writePtr = smp->settings.buffer.buffer;
     if (preserveReceivedDelimeter)
     {
-        smp->status.flags.recievedDelimeter = receivedDelimeter;
+        smp->flags.recievedDelimeter = receivedDelimeter;
     }
 }
-
-#ifdef CREATE_ALLOC_LAYER
-MODULE_API smp_struct_t *SMP_BuildObject(uint32_t bufferlength, SMP_Frame_Ready frameReadyCallback, SMP_Frame_Ready rogueFrameCallback)
-{
-    uint8_t *buffer = malloc(sizeof(uint8_t) * bufferlength);
-    if (buffer != 0)
-    {
-        smp_struct_t *instance = malloc(sizeof(smp_struct_t));
-        if (instance != 0)
-        {
-            instance->settings.buffer.buffer = buffer;
-            instance->settings.buffer.maxlength = sizeof(uint8_t) * bufferlength;
-            instance->settings.frameReadyCallback = frameReadyCallback;
-            instance->settings.rogueFrameCallback = rogueFrameCallback;
-            return instance;
-        }
-        else
-        {
-            free(buffer);
-        }
-    }
-    return 0;
-}
-
-MODULE_API void SMP_DestroyObject(smp_struct_t *st)
-{
-    free(st->settings.buffer.buffer);
-    free(st);
-}
-#endif
 
 /************************************************************************
  * @brief Initialize the smp-buffers
  ************************************************************************/
-signed char SMP_Init(smp_struct_t *st, smp_settings_t *settings)
+signed char SMP_Init(smp_struct_t *st)
 {
     SMP_ResetDecoderState(st, false);
-    if (settings != 0)
-        memcpy(st, settings, sizeof(smp_settings_t)); // Copy the settings if they are passed to this function
     return 0;
 }
 
@@ -220,25 +182,6 @@ MODULE_API unsigned int SMP_Send(const byte *buffer, unsigned short length, byte
     return messageSize;
 }
 
-/************************************************************************
- * @brief  Parse multiple bytes
- * This function calls SMP_RecieveInByte for every byte in the buffer
- ************************************************************************/
-
-MODULE_API signed char SMP_RecieveInBytes(const byte *data, uint32_t length, smp_struct_t *st)
-{
-    unsigned int i;
-    signed char ret = 0;
-    signed char smpRet;
-    for (i = 0; i < length; i++)
-    {
-        smpRet = SMP_RecieveInByte(data[i], st);
-        if (smpRet != 0)
-            ret = smpRet;
-    }
-    return ret;
-}
-
 MODULE_API uint16_t SMP_PacketGetLength(const byte *data, uint16_t *headerlength)
 {
     uint16_t protocolbytecounter = 1;    // Initialize with 1 we count the framestart here
@@ -320,95 +263,69 @@ MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_
 /**
  *  @brief Private function to process the received bytes without the bytestuffing
  * **/
-static int private_SMP_RecieveInByte(byte data, smp_struct_t *st)
+static smp_decoder_stat private_SMP_RecieveInByte(byte data, byte* decoded, smp_struct_t *st)
 {
-    switch (st->status.flags.decoderstate)
+    switch (st->flags.decoderstate)
     // State machine
     {
     case 0: // Idle State Waiting for Framestart
-        st->status.flags.lengthreceived = 0;
-        break;
+        st->flags.lengthreceived = 0;
+        return NO_PACKET_START;
     case 1:
-        st->status.flags.recieving = 1;
-        if (!st->status.flags.lengthreceived)
+        st->flags.recieving = 1;
+        if (!st->flags.lengthreceived)
         {
-            st->status.bytesToRecieve = data;
-            st->status.flags.lengthreceived = 1;
+            st->bytesToRecieve = data;
+            st->flags.lengthreceived = 1;
         }
         else
         {
-            st->status.bytesToRecieve |= data << 8;
-            st->status.flags.decoderstate = 2;
-            st->status.crc = 0;
-            st->status.writePtr = st->settings.buffer.buffer;
+            st->bytesToRecieve |= data << 8;
+            st->flags.decoderstate = 2;
+            st->crc = 0;
         }
-        break;
+        return PACKET_START_FOUND;
     case 2:
-        st->status.bytesToRecieve--;
-        if (st->status.writePtr >= (st->settings.buffer.buffer + st->settings.buffer.maxlength))
+        st->bytesToRecieve--;
+        *decoded = data;
+        st->crc = crc16(st->crc, data, CRC_POLYNOM);
+        if (st->bytesToRecieve == 2) // If we only have two bytes to receive we switch to the reception of the crc data
         {
-            // We have a bufferoverflow
-            st->status.flags.decoderstate = 0;
-            st->status.flags.recieving = 0;
-            return -1; // Show error by returning -1
+            st->flags.decoderstate = 3;
         }
-        *st->status.writePtr = data;
-        st->status.writePtr++;
-        st->status.crc = crc16(st->status.crc, data, CRC_POLYNOM);
-        if (st->status.bytesToRecieve == 2) // If we only have two bytes to receive we switch to the reception of the crc data
-        {
-            st->status.flags.decoderstate = 3;
-        }
-        else if (st->status.bytesToRecieve < 2)
+        else if (st->bytesToRecieve < 2)
         {
             // This should not happen and indicates an memorycorruption
             SMP_ResetDecoderState(st, true);
-            return -2;
+            return ERROR_UNKOWN;
         }
-        break;
+        return RECEIVED_BYTE;
     case 3:
-        if (st->status.bytesToRecieve)
+        if (st->bytesToRecieve)
         {
-            st->status.crcHighByte = data; // At first we save the high byte of the transmitted crc
-            st->status.bytesToRecieve = 0; // Set bytestoReceive to 0 to signal the receiving of the last byte
+            st->crcHighByte = data; // At first we save the high byte of the transmitted crc
+            st->bytesToRecieve = 0; // Set bytestoReceive to 0 to signal the receiving of the last byte
         }
         else
         {
-            unsigned char ret = -4;
-            if (st->status.crc == ((unsigned short)(st->status.crcHighByte << 8) | data)) // Read the crc and compare
+            if (st->crc == ((unsigned short)(st->crcHighByte << 8) | data)) // Read the crc and compare
             {
-                // Data ready
-                if (st->settings.frameReadyCallback)
-                {
-                    ret = st->settings.frameReadyCallback(st->settings.buffer.buffer, st->status.writePtr - st->settings.buffer.buffer);
-                    if (ret >= 0)
-                    {
-                        ret += 2;
-                    }
-                }
-                else
-                {
-                    ret = 1;
-                }
                 SMP_ResetDecoderState(st, false);
+                return PACKET_READY;
             }
             else // crc doesnt match.
             {
-                if (st->settings.rogueFrameCallback)
-                {
-                    st->settings.rogueFrameCallback(st->settings.buffer.buffer, st->status.writePtr - st->settings.buffer.buffer);
-                }
                 SMP_ResetDecoderState(st, true);
+                return CRC_ERROR;
             }
-            return ret;
         }
-        break;
+        return RECEIVE_CRC;
 
     default: // Invalid State
         SMP_ResetDecoderState(st, true);
-        return -5;
+        return ERROR_UNKOWN;
     }
-    return 0;
+    return ERROR_UNKOWN;
 }
 
 /************************************************************************
@@ -423,38 +340,43 @@ static int private_SMP_RecieveInByte(byte data, smp_struct_t *st)
  * -3: Reserved
  * -4: CRC Error
  ************************************************************************/
-MODULE_API signed char SMP_RecieveInByte(byte data, smp_struct_t *st)
+MODULE_API smp_decoder_stat SMP_RecieveInByte(byte data, byte* decoded, smp_struct_t *st)
 {
+    smp_decoder_stat ret = NO_PACKET_START;
     // Remove the bytestuffing from the data
     if (data == FRAMESTART)
     {
-        if (st->status.flags.recievedDelimeter)
+        if (st->flags.recievedDelimeter)
         {
-            st->status.flags.recievedDelimeter = 0;
-            return private_SMP_RecieveInByte(data, st);
+            st->flags.recievedDelimeter = 0;
+            ret = private_SMP_RecieveInByte(data, decoded, st);
         }
         else
         {
-            st->status.flags.recievedDelimeter = 1;
+            st->flags.recievedDelimeter = 1;
+            ret = RECEIVING;
         }
     }
     else
     {
-        if (st->status.flags.recievedDelimeter)
+        if (st->flags.recievedDelimeter)
         {
-            if (st->status.flags.recieving)
+            if (st->flags.recieving)
             {
-                if (st->settings.rogueFrameCallback)
-                    st->settings.rogueFrameCallback(st->settings.buffer.buffer, st->status.writePtr - st->settings.buffer.buffer);
+                ret = REPEATED_FRAMESTART;
             }
             SMP_ResetDecoderState(st, false);
-            st->status.flags.decoderstate = 1; // Set the decoder into receive mode
-            st->status.flags.recieving = 1;
+            st->flags.decoderstate = 1; // Set the decoder into receive mode
+            st->flags.recieving = 1;
         }
-        st->status.flags.recievedDelimeter = 0;
-        return private_SMP_RecieveInByte(data, st);
+        st->flags.recievedDelimeter = 0;
+        smp_decoder_stat recieveReturnValue = private_SMP_RecieveInByte(data, decoded, st);
+        if(ret != REPEATED_FRAMESTART)
+        {
+            ret = recieveReturnValue;
+        }
     }
-    return 0;
+    return ret;
 }
 
 /**********************************************************************
@@ -466,7 +388,7 @@ MODULE_API signed char SMP_RecieveInByte(byte data, smp_struct_t *st)
 MODULE_API uint32_t SMP_GetBytesToRecieve(smp_struct_t *st)
 {
     if (SMP_IsRecieving(st))
-        return st->status.bytesToRecieve;
+        return st->bytesToRecieve;
     else
         return 0;
 }
@@ -476,5 +398,5 @@ MODULE_API uint32_t SMP_GetBytesToRecieve(smp_struct_t *st)
  */
 MODULE_API bool SMP_IsRecieving(smp_struct_t *st)
 {
-    return st->status.flags.recieving;
+    return st->flags.recieving;
 }
