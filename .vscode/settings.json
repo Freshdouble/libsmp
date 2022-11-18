@@ -1,0 +1,24 @@
+{
+    "files.associations": {
+        "array": "cpp",
+        "type_traits": "cpp",
+        "xstddef": "cpp",
+        "initializer_list": "cpp",
+        "xutility": "cpp",
+        "bit": "cpp",
+        "compare": "cpp",
+        "concepts": "cpp",
+        "cstddef": "cpp",
+        "cstdint": "cpp",
+        "cstdio": "cpp",
+        "cstdlib": "cpp",
+        "cstring": "cpp",
+        "cwchar": "cpp",
+        "iosfwd": "cpp",
+        "iterator": "cpp",
+        "limits": "cpp",
+        "tuple": "cpp",
+        "utility": "cpp",
+        "xtr1common": "cpp"
+    }
+}

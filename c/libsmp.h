@@ -71,6 +71,8 @@ typedef enum
         smp_flags_t flags;
     } smp_struct_t;
 
+    MODULE_API uint16_t SMP_crc16(uint16_t crc, uint16_t c, uint16_t mask);
+
     // Application functions
     signed char SMP_Init(smp_struct_t *st);
     MODULE_API uint32_t SMP_estimatePacketLength(const byte *buffer, unsigned short length);
@@ -79,7 +81,7 @@ typedef enum
     MODULE_API unsigned int SMP_Send(const byte *buffer, unsigned short length, byte *messageBuffer, unsigned short bufferLength, byte **messageStartPtr);
     MODULE_API uint16_t SMP_PacketGetLength(const byte *data, uint16_t *headerlength);
     MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_t headerlength, uint16_t *crclength);
-    MODULE_API smp_decoder_stat SMP_RecieveInByte(byte data, byte* decoded, smp_struct_t *st)
+    MODULE_API smp_decoder_stat SMP_RecieveInByte(byte data, byte* decoded, smp_struct_t *st);
     MODULE_API uint32_t SMP_GetBytesToRecieve(smp_struct_t *st);
     MODULE_API bool SMP_IsRecieving(smp_struct_t *st);
     MODULE_API signed char SMP_getRecieverError(void);

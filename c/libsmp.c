@@ -17,10 +17,10 @@
 /***********************************************************************
  * @brief Private function definiton to calculate the crc checksum
  ***********************************************************************/
-static unsigned int crc16(unsigned int crc, unsigned int c, unsigned int mask)
+MODULE_API uint16_t SMP_crc16(uint16_t crc, uint16_t c, uint16_t mask)
 {
-    unsigned char i;
-    unsigned int _crc = crc;
+    uint8_t i;
+    uint16_t _crc = crc;
     for (i = 0; i < 8; i++)
     {
         if ((_crc ^ c) & 1)
@@ -136,7 +136,7 @@ MODULE_API unsigned int SMP_Send(const byte *buffer, unsigned short length, byte
         }
 
         messagePtr[i + offset] = buffer[i];
-        crc = crc16(crc, buffer[i], CRC_POLYNOM);
+        crc = SMP_crc16(crc, buffer[i], CRC_POLYNOM);
     }
 
     messagePtr[i + offset] = crc >> 8; // CRC high byte
@@ -221,7 +221,7 @@ MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_
     uint16_t payloadlength = packetlength - headerlength;
     for (uint16_t i = 0; i < payloadlength - 2; i++)
     {
-        crc = crc16(crc, *payload, CRC_POLYNOM);
+        crc = SMP_crc16(crc, *payload, CRC_POLYNOM);
         if (*payload == FRAMESTART)
         {
             payload++;
@@ -288,7 +288,7 @@ static smp_decoder_stat private_SMP_RecieveInByte(byte data, byte* decoded, smp_
     case 2:
         st->bytesToRecieve--;
         *decoded = data;
-        st->crc = crc16(st->crc, data, CRC_POLYNOM);
+        st->crc = SMP_crc16(st->crc, data, CRC_POLYNOM);
         if (st->bytesToRecieve == 2) // If we only have two bytes to receive we switch to the reception of the crc data
         {
             st->flags.decoderstate = 3;
@@ -308,7 +308,8 @@ static smp_decoder_stat private_SMP_RecieveInByte(byte data, byte* decoded, smp_
         }
         else
         {
-            if (st->crc == ((unsigned short)(st->crcHighByte << 8) | data)) // Read the crc and compare
+            uint16_t transmittedCRC = (uint16_t)(st->crcHighByte << 8) | data;
+            if (st->crc == transmittedCRC) // Read the crc and compare
             {
                 SMP_ResetDecoderState(st, false);
                 return PACKET_READY;
