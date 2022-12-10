@@ -15,14 +15,14 @@ template <size_t maxmessageLength>
 class SMP
 {
 public:
-    static constexpr auto CalcReceiveArrayLength(size_t maxmessageLength)
+    static constexpr auto CalcReceiveArrayLength(size_t msglen)
     {
-        return maxmessageLength;
+        return msglen;
     }
 
-    static constexpr auto CalcTransmitArrayLength(size_t maxmessageLength)
+    static constexpr auto CalcTransmitArrayLength(size_t msglen)
     {
-        return SMP_SEND_BUFFER_LENGTH(maxmessageLength);
+        return SMP_SEND_BUFFER_LENGTH(msglen);
     }
 
     static constexpr size_t InternalBufferLength = CalcTransmitArrayLength(maxmessageLength);
@@ -45,16 +45,16 @@ public:
         SMP_Init(&smp);
     }
 
-    template <auto Callback>
-    size_t Transmit(const void *buffer, size_t length)
+    template <typename functorType>
+    size_t Transmit(functorType& callback, const void *buffer, size_t length)
     {
         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(buffer);
         const uint8_t *end = ptr + length;
-        return Transmit<Callback, const uint8_t *>(ptr, end);
+        return Transmit<functorType, const uint8_t *>(callback, ptr, end);
     }
 
-    template <auto Callback, typename Iterator>
-    size_t Transmit(const Iterator &start, const Iterator &end)
+    template <typename functorType, typename Iterator>
+    size_t Transmit(functorType& callback, const Iterator &start, const Iterator &end)
     {
         std::array<uint8_t, TransmitArrayLength> buffer;
         buffer[0] = FRAMESTART;
@@ -81,7 +81,7 @@ public:
             offset += AddDataToBuffer(data, buffer, offset);
         }
         offset += AddDataToBuffer(crc, buffer, offset, true);
-        if (Callback(buffer.data(), offset) == offset)
+        if (callback(buffer.data(), offset) == offset)
         {
             return length;
         }
@@ -91,16 +91,16 @@ public:
         }
     }
 
-    template <auto Callback>
-    size_t Receive(const void *buffer, size_t length)
+    template <typename functorType>
+    size_t Receive(functorType& callback, const void *buffer, size_t length)
     {
         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(buffer);
         const uint8_t *end = ptr + length;
-        return Receive<Callback, const uint8_t *>(ptr, end);
+        return Receive<functorType, const uint8_t *>(callback, ptr, end);
     }
 
-    template <auto Callback, typename Iterator>
-    size_t Receive(const Iterator &start, const Iterator &end)
+    template <typename functorType, typename Iterator>
+    size_t Receive(functorType& callback, const Iterator &start, const Iterator &end)
     {
         std::array<uint8_t, ReceiveArrayLength> buffer;
         size_t offset = 0;
@@ -116,7 +116,7 @@ public:
                 offset++;
                 break;
             case PACKET_READY:
-                Callback(buffer.data(), offset);
+            	callback(buffer.data(), offset);
                 break;
             default:
                 break;
