@@ -25,8 +25,6 @@ extern "C"
 #define FRAMESTART 0xFF    // The framestartdelimeter
 #define CRC_POLYNOM 0xA001 // CRC Generatorpolynom
 
-    typedef uint8_t byte;
-
 typedef enum
 {
     NO_PACKET_START,
@@ -75,13 +73,13 @@ typedef enum
 
     // Application functions
     signed char SMP_Init(smp_struct_t *st);
-    MODULE_API uint32_t SMP_estimatePacketLength(const byte *buffer, unsigned short length);
+    MODULE_API uint32_t SMP_estimatePacketLength(const uint8_t *buffer, unsigned short length);
     MODULE_API uint32_t SMP_CalculateMinimumSendBufferSize(unsigned short length);
-    MODULE_API unsigned int SMP_SendRetIndex(const byte *buffer, unsigned short length, byte *messageBuffer, unsigned short bufferLength, unsigned short *messageStartIndex);
-    MODULE_API unsigned int SMP_Send(const byte *buffer, unsigned short length, byte *messageBuffer, unsigned short bufferLength, byte **messageStartPtr);
-    MODULE_API uint16_t SMP_PacketGetLength(const byte *data, uint16_t *headerlength);
-    MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_t headerlength, uint16_t *crclength);
-    MODULE_API smp_decoder_stat SMP_RecieveInByte(byte data, byte* decoded, smp_struct_t *st);
+    MODULE_API unsigned int SMP_SendRetIndex(const uint8_t *buffer, unsigned short length, uint8_t *messageBuffer, unsigned short bufferLength, unsigned short *messageStartIndex);
+    MODULE_API unsigned int SMP_Send(const uint8_t *buffer, unsigned short length, uint8_t *messageBuffer, unsigned short bufferLength, uint8_t **messageStartPtr);
+    MODULE_API uint16_t SMP_PacketGetLength(const uint8_t *data, uint16_t *headerlength);
+    MODULE_API bool SMP_PacketValid(const uint8_t *data, uint16_t packetlength, uint16_t headerlength, uint16_t *crclength);
+    MODULE_API smp_decoder_stat SMP_RecieveInByte(uint8_t data, uint8_t* decoded, smp_struct_t *st);
     MODULE_API uint32_t SMP_GetBytesToRecieve(smp_struct_t *st);
     MODULE_API bool SMP_IsRecieving(smp_struct_t *st);
     MODULE_API signed char SMP_getRecieverError(void);

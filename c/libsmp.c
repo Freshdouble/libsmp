@@ -66,7 +66,7 @@ signed char SMP_Init(smp_struct_t *st)
  * @return estimated size of the smp packet
  ************************************************************************/
 
-MODULE_API uint32_t SMP_estimatePacketLength(const byte *buffer, unsigned short length)
+MODULE_API uint32_t SMP_estimatePacketLength(const uint8_t *buffer, unsigned short length)
 {
     unsigned short overheadCounter = 0;
     unsigned int ret = 0;
@@ -93,9 +93,9 @@ MODULE_API uint32_t SMP_CalculateMinimumSendBufferSize(unsigned short length)
  * This function returns the index at which the message starts in the messageBuffer instead
  * of a pointer to the startingposition like SMP_Send
  **/
-MODULE_API unsigned int SMP_SendRetIndex(const byte *buffer, unsigned short length, byte *messageBuffer, unsigned short bufferLength, unsigned short *messageStartIndex)
+MODULE_API unsigned int SMP_SendRetIndex(const uint8_t *buffer, unsigned short length, uint8_t *messageBuffer, unsigned short bufferLength, unsigned short *messageStartIndex)
 {
-    byte *messageStartPtr;
+	uint8_t *messageStartPtr;
     unsigned int ret = SMP_Send(buffer, length, messageBuffer, bufferLength, &messageStartPtr);
     if (ret != 0)
     {
@@ -111,7 +111,7 @@ MODULE_API unsigned int SMP_SendRetIndex(const byte *buffer, unsigned short leng
  * @return The length of the whole smp packet. If this value is zero an error
  *          occured and messageStartPtr is not valid
  ************************************************************************/
-MODULE_API unsigned int SMP_Send(const byte *buffer, unsigned short length, byte *messageBuffer, unsigned short bufferLength, byte **messageStartPtr)
+MODULE_API unsigned int SMP_Send(const uint8_t *buffer, unsigned short length, uint8_t *messageBuffer, unsigned short bufferLength, uint8_t **messageStartPtr)
 {
     unsigned int i = 2;
     unsigned int offset = 0;
@@ -182,7 +182,7 @@ MODULE_API unsigned int SMP_Send(const byte *buffer, unsigned short length, byte
     return messageSize;
 }
 
-MODULE_API uint16_t SMP_PacketGetLength(const byte *data, uint16_t *headerlength)
+MODULE_API uint16_t SMP_PacketGetLength(const uint8_t *data, uint16_t *headerlength)
 {
     uint16_t protocolbytecounter = 1;    // Initialize with 1 we count the framestart here
     const uint8_t *lengthptr = data + 1; // Skip Framestart
@@ -212,7 +212,7 @@ MODULE_API uint16_t SMP_PacketGetLength(const byte *data, uint16_t *headerlength
     return length;
 }
 
-MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_t headerlength, uint16_t *crclength)
+MODULE_API bool SMP_PacketValid(const uint8_t *data, uint16_t packetlength, uint16_t headerlength, uint16_t *crclength)
 {
     uint16_t crc = 0;
     uint16_t crccount = 0;
@@ -263,7 +263,7 @@ MODULE_API bool SMP_PacketValid(const byte *data, uint16_t packetlength, uint16_
 /**
  *  @brief Private function to process the received bytes without the bytestuffing
  * **/
-static smp_decoder_stat private_SMP_RecieveInByte(byte data, byte* decoded, smp_struct_t *st)
+static smp_decoder_stat private_SMP_RecieveInByte(uint8_t data, uint8_t* decoded, smp_struct_t *st)
 {
     switch (st->flags.decoderstate)
     // State machine
@@ -341,7 +341,7 @@ static smp_decoder_stat private_SMP_RecieveInByte(byte data, byte* decoded, smp_
  * -3: Reserved
  * -4: CRC Error
  ************************************************************************/
-MODULE_API smp_decoder_stat SMP_RecieveInByte(byte data, byte* decoded, smp_struct_t *st)
+MODULE_API smp_decoder_stat SMP_RecieveInByte(uint8_t data, uint8_t* decoded, smp_struct_t *st)
 {
     smp_decoder_stat ret = NO_PACKET_START;
     // Remove the bytestuffing from the data
