@@ -286,6 +286,7 @@ static smp_decoder_stat private_SMP_RecieveInByte(uint8_t data, uint8_t* decoded
         }
         return PACKET_START_FOUND;
     case 2:
+    	st->flags.lengthreceived = 0;
         st->bytesToRecieve--;
         *decoded = data;
         st->crc = SMP_crc16(st->crc, data, CRC_POLYNOM);

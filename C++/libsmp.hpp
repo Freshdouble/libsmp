@@ -103,7 +103,7 @@ public:
     size_t Receive(functorType& callback, const Iterator &start, const Iterator &end)
     {
         std::array<uint8_t, ReceiveArrayLength> buffer;
-        size_t offset = 0;
+        static size_t offset = 0;
         size_t bytecount = 0;
         for (auto it = start; it < end; it++)
         {
@@ -111,12 +111,16 @@ public:
             auto ret = SMP_RecieveInByte(*it, &d, &smp);
             switch (ret)
             {
+            case PACKET_START_FOUND:
+            	offset = 0;
+            	break;
             case RECEIVED_BYTE:
                 buffer[offset] = d;
                 offset++;
                 break;
             case PACKET_READY:
             	callback(buffer.data(), offset);
+            	offset = 0;
                 break;
             default:
                 break;
