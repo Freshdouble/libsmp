@@ -1,0 +1,26 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "type": "shell",
+        "label": "cl.exe build active file",
+        "command": "cl.exe",
+        "args": [
+          "/std:c++17",
+          "/I ../../c",
+          "/I ../../C++",
+          "/Zi",
+          "/EHsc",
+          "/Fe:",
+          "${workspaceFolder}/test/libsmpTest/test.exe",
+          "${workspaceFolder}/test/libsmpTest/main.cpp",
+          "${workspaceFolder}/c/libsmp.c"
+        ],
+        "problemMatcher": ["$msCompile"],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      }
+    ]
+  }

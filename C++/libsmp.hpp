@@ -1,121 +1,237 @@
 #include "libsmp.h"
 #include <array>
 #include <cstdint>
-#include <tuple>
-#include <assert.h>
+#include <iterator>
 
 #pragma once
 
 /**
- * @brief Class for the smp receiver and transmitter functions. This is an abstraction from the standard C functions.
+ * @brief Class for the smp receiver and sender functions. This is an abstraction from the standard C functions.
  *
  * This class generates an internal buffer that is about 2*maxpacketSize bytes big.
  * The transmit functions use a local version of that buffer on the stack memory, so maxpacketSize has a main impact on the memory consumption.
  */
-template <size_t maxpacketSize>
+template <size_t maxmessageLength>
 class SMP
 {
 public:
-    static const size_t BUFFER_SIZE = MINIMUM_SMP_BUFFERLENGTH(maxpacketSize);
-    static_assert(maxpacketSize <= (std::numeric_limits<uint16_t>::max() >> 1), "SMP supports only 15bit message size");
+    static constexpr auto CalcReceiveArrayLength(size_t msglen)
+    {
+        return msglen;
+    }
+
+    static constexpr auto CalcTransmitArrayLength(size_t msglen)
+    {
+        return SMP_SEND_BUFFER_LENGTH(msglen);
+    }
+
+    static constexpr size_t InternalBufferLength = CalcTransmitArrayLength(maxmessageLength);
+    static constexpr size_t MaximumSupportedMessageLength = 0xFEFF;
+    static constexpr auto ReceiveArrayLength = CalcReceiveArrayLength(maxmessageLength);
+    static constexpr auto TransmitArrayLength = InternalBufferLength;
+
+    static constexpr size_t GetMinimumMessageLengthField(size_t messageLength)
+    {
+        return messageLength + 2;
+    }
+
+    static_assert(GetMinimumMessageLengthField(maxmessageLength) <= MaximumSupportedMessageLength);
 
     /**
      * @brief Construct a new SMP object.
-     *
-     * @param framereadyfunction - Function pointer to the callback function that is called when a new message is received.
      */
-    SMP(const SMP_Frame_Ready framereadyfunction)
+    SMP()
     {
-        smp_settings_t settings;
-        settings.buffer.buffer = buffer.data();
-        settings.buffer.maxlength = buffer.size();
-        settings.rogueFrameCallback = 0;
-        settings.frameReadyCallback = framereadyfunction;
-
-        SMP_Init(&smp, &settings);
+        SMP_Init(&smp);
     }
 
-    /**
-     * @brief Send data using the sendfunc.
-     *
-     * The sendfunc callback function should have the following signature
-     * size_t SendFunc(const uint8_t* data, size_t length) and should return the number of bytes of the input data that where transmitted.
-     * This function will return true only if the return of this function is equal to inputlength.
-     * If it is possible the uint8 pointer should be made const, if this is not possible it should be ensured by the programmer that the contents of the memory pointed to by this vector are not modified.
-     * The reason why this isn't enforced is due to compatibility issues with some libraries. If the library needs to modify the contents of this array copy the data to a new array instead. The max length of the array behind data is SMP::BUFFER_SIZE
-     * 
-     * If possible use the bool SendData(const std::array<uint8_t, length> &buffer, const size_t bytesToSend = length) function instead. This function is only there to build an wrapper for std::vector or other container types.
-     * This function will copy the contents of the vector into an intermediate buffer with the size of maxpacketsize and then calls the above mentioned function. This reduces the performance and increase the memory consuption, so if possible call the above function direct.
-     *
-     * @tparam iterator - iterator to the start of the cointer with the data to send.
-     * @tparam sendfunc - function used to send the data. This function accepts a uint8 pointer to the start of the data, a size_t which holds the length of the data in the array which the pointer points to and returns the number of sent bytes
-     * @param start
-     * @param end
-     * @return true if the smp packet was created successfully and the send function accepted all bytes.
-     */
-    template <typename iterator, auto sendfunc>
-    bool SendData(const iterator &start, const iterator &end)
+    template <typename functorType>
+    size_t Transmit(functorType& callback, const void *buffer, size_t length)
     {
-        std::array<uint8_t, maxpacketSize> buf;
-        auto inputlength = std::distance(start, end);
-        if (inputlength > maxpacketSize || inputlength < 0)
+        const uint8_t *ptr = reinterpret_cast<const uint8_t *>(buffer);
+        const uint8_t *end = ptr + length;
+        return Transmit<functorType, const uint8_t *>(callback, ptr, end);
+    }
+
+    template <typename functorType, typename Iterator>
+    size_t Transmit(functorType& callback, const Iterator &start, const Iterator &end)
+    {
+        std::array<uint8_t, TransmitArrayLength> buffer;
+        buffer[0] = FRAMESTART;
+        size_t length = 0;
+        uint16_t crc = 0;
+        for (auto it = start; it < end; it++)
         {
-            return false; // return error if we can not send the full packet
+            auto b = *it;
+            length += sizeof(b);
+            crc = CalcCRC(*it, crc);
         }
-        std::copy(start, end, buf.begin());
-        return SendData<maxpacketSize, sendfunc>(buf, inputlength);
-    }
+        size_t crclength = CalculateByteStuffedLength(crc);
+        if (length > InternalBufferLength || (length + crclength) > MaximumSupportedMessageLength)
+            return 0;
 
-    /**
-     * @brief Send data using the sendfunc.
-     *
-     * The sendfunc callback function should have the following signature
-     * size_t SendFunc(const uint8_t* data, size_t length) and should return the number of bytes of the input data that where transmitted.
-     * This function will return true only if the return of this function is equal to inputlength.
-     * If it is possible the uint8 pointer should be made const, if this is not possible it should be ensured by the programmer that the contents of the memory pointed to by this vector are not modified.
-     * The reason why this isn't enforced is due to compatibility issues with some libraries. If the library needs to modify the contents of this array copy the data to a new array instead. The max length of the array behind data is SMP::BUFFER_SIZE
-     *
-     * @tparam length - length of the std::array used as buffer.
-     * @tparam sendfunc - function used to send the data. This function accepts a uint8 pointer to the start of the data, a size_t which holds the length of the data in the array which the pointer points to and returns the number of sent bytes
-     * @param buffer - a std::array which holds the data to be transmitted
-     * @param bytesToSend - number of bytes in the std::array to be transmitted. Defaults to the array length
-     * @return true if the smp packet was created successfully and the send function accepted all bytes.
-     */
-    template <const size_t length, auto sendfunc>
-    bool SendData(const std::array<uint8_t, length> &buffer, const size_t bytesToSend = length)
-    {
-        static_assert(length <= maxpacketSize, "We can not send packages that are larger than the max allowed message size");
-        std::array<uint8_t, BUFFER_SIZE> buf;
-        uint8_t *messageStart = 0;
-        size_t packetLength = 0;
-        assert(length >= bytesToSend);                                                                                                                   // Check if the buffer even has enough space for all bytes to send
-        if ((packetLength = SMP_Send(buffer.data(), std::min<size_t>(bytesToSend, buffer.size()), buf.data(), buf.size(), &messageStart)) > bytesToSend) // Some plausibility check that the transmited data must be larger than the input data
+        uint16_t lengthField = length + crclength;
+
+        buffer[1] = lengthField & 0xFF;
+        buffer[2] = (lengthField >> 8) & 0xFF;
+        size_t offset = 3;
+        for (auto it = start; it < end; it++)
         {
-            size_t sentbytes = sendfunc(messageStart, packetLength);
-            return sentbytes == packetLength;
+            auto data = *it;
+            offset += AddDataToBuffer(data, buffer, offset);
+        }
+        offset += AddDataToBuffer(crc, buffer, offset, true);
+        if (callback(buffer.data(), offset) == offset)
+        {
+            return length;
         }
         else
         {
-            return false;
+            return 0;
         }
     }
 
-    template <const size_t length>
-    void ReceiveData(const std::array<uint8_t, length> &buffer, size_t bufferlength = length)
+    template <typename functorType>
+    size_t Receive(functorType& callback, const void *buffer, size_t length)
     {
-        ReceiveData(buffer.data(), bufferlength);
+        const uint8_t *ptr = reinterpret_cast<const uint8_t *>(buffer);
+        const uint8_t *end = ptr + length;
+        return Receive<functorType, const uint8_t *>(callback, ptr, end);
     }
 
-    void ReceiveData(const uint8_t *data, size_t length)
+    template <typename functorType, typename Iterator>
+    size_t Receive(functorType& callback, const Iterator &start, const Iterator &end)
     {
-        SMP_RecieveInBytes(data, static_cast<uint32_t>(length), &smp);
+        std::array<uint8_t, ReceiveArrayLength> buffer;
+        static size_t offset = 0;
+        size_t bytecount = 0;
+        for (auto it = start; it < end; it++)
+        {
+            uint8_t d;
+            auto ret = SMP_RecieveInByte(*it, &d, &smp);
+            switch (ret)
+            {
+            case PACKET_START_FOUND:
+            	offset = 0;
+            	break;
+            case RECEIVED_BYTE:
+                buffer[offset] = d;
+                offset++;
+                break;
+            case PACKET_READY:
+            	callback(buffer.data(), offset);
+            	offset = 0;
+                break;
+            default:
+                break;
+            }
+            bytecount++;
+        }
+        return bytecount;
     }
+
 private:
-    /**
-     * @brief Internal data storage for received data.
-     *
-     */
-    std::array<uint8_t, BUFFER_SIZE> buffer;
+    template <typename Iterator>
+    bool AdvanceIteratorSave(Iterator &it, size_t offset, Iterator end)
+    {
+        std::advance(it, offset);
+        if (it > end)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    template <typename T>
+    inline size_t CalculateByteStuffedLength(const T &data)
+    {
+        size_t ret = sizeof(T);
+        for (size_t i = 0; i < sizeof(T); i++)
+        {
+            if (((data >> (i * 8)) & 0xFF) == FRAMESTART)
+            {
+                ret++;
+            }
+        }
+        return ret;
+    }
+
+    template <typename T, size_t size>
+    inline size_t AddDataToBuffer(const T &data, std::array<uint8_t, size> &buffer, const size_t offset, const bool reverseByteOrder = false)
+    {
+        size_t ret = 0;
+        if (reverseByteOrder)
+        {
+            for (size_t i = (sizeof(T) - 1); i > 0; i--)
+            {
+                uint8_t d = (data >> (i * 8)) & 0xFF;
+                if ((offset + ret) >= buffer.size())
+                {
+                    return 0;
+                }
+                buffer[offset + ret] = d;
+                ret++;
+                if (d == FRAMESTART)
+                {
+                    if ((offset + ret) >= buffer.size())
+                    {
+                        return 0;
+                    }
+                    buffer[offset + ret] = FRAMESTART;
+                    ret++;
+                }
+            }
+            if ((offset + ret) >= buffer.size())
+            {
+                return 0;
+            }
+            buffer[offset + ret] = data & 0xFF;
+            ret++;
+            if ((data & 0xFF) == FRAMESTART)
+            {
+                if ((offset + ret) >= buffer.size())
+                {
+                    return 0;
+                }
+                buffer[offset + ret] = FRAMESTART;
+                ret++;
+            }
+        }
+        else
+        {
+            for (size_t i = 0; i < sizeof(T); i++)
+            {
+                uint8_t d = (data >> (i * 8)) & 0xFF;
+                if ((offset + ret) >= buffer.size())
+                {
+                    return 0;
+                }
+                buffer[offset + ret] = d;
+                ret++;
+                if (d == FRAMESTART)
+                {
+                    if ((offset + ret) >= buffer.size())
+                    {
+                        return 0;
+                    }
+                    buffer[offset + ret] = FRAMESTART;
+                    ret++;
+                }
+            }
+        }
+        return ret;
+    }
+
+    template <typename T>
+    inline uint16_t CalcCRC(const T &data, uint16_t crc)
+    {
+        for (size_t i = 0; i < sizeof(T); i++)
+        {
+            uint8_t d = (data >> (i * 8)) & 0xFF;
+            crc = SMP_crc16(crc, d, CRC_POLYNOM);
+        }
+        return crc;
+    }
 
     /**
      * @brief The smp data structure that holds the configuration as well as the status of the decoder.
