@@ -2,6 +2,7 @@
 #include <array>
 #include <cstdint>
 #include <iterator>
+#include <functional>
 
 #pragma once
 
@@ -45,16 +46,15 @@ public:
         SMP_Init(&smp);
     }
 
-    template <typename functorType>
-    size_t Transmit(functorType& callback, const void *buffer, size_t length)
+    size_t Transmit(const std::function<size_t(uint8_t*, size_t)>& callback, const void *buffer, size_t length)
     {
         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(buffer);
         const uint8_t *end = ptr + length;
-        return Transmit<functorType, const uint8_t *>(callback, ptr, end);
+        return Transmit<const uint8_t *>(callback, ptr, end);
     }
 
-    template <typename functorType, typename Iterator>
-    size_t Transmit(functorType& callback, const Iterator &start, const Iterator &end)
+    template <typename Iterator>
+    size_t Transmit(const std::function<size_t(uint8_t*, size_t)>& callback, const Iterator &start, const Iterator &end)
     {
         std::array<uint8_t, TransmitArrayLength> buffer;
         buffer[0] = FRAMESTART;
@@ -91,16 +91,15 @@ public:
         }
     }
 
-    template <typename functorType>
-    size_t Receive(functorType& callback, const void *buffer, size_t length)
+    size_t Receive(const std::function<void(const uint8_t*, size_t)>& callback,const void *buffer, size_t length)
     {
         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(buffer);
         const uint8_t *end = ptr + length;
-        return Receive<functorType, const uint8_t *>(callback, ptr, end);
+        return Receive<const uint8_t *>(callback, ptr, end);
     }
 
-    template <typename functorType, typename Iterator>
-    size_t Receive(functorType& callback, const Iterator &start, const Iterator &end)
+    template <typename Iterator>
+    size_t Receive(const std::function<void(const uint8_t*, size_t)>& callback, const Iterator &start, const Iterator &end)
     {
         std::array<uint8_t, ReceiveArrayLength> buffer;
         static size_t offset = 0;
