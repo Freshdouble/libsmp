@@ -46,17 +46,30 @@ public:
         SMP_Init(&smp);
     }
 
-    size_t Transmit(const std::function<size_t(uint8_t*, size_t)>& callback, const void *buffer, size_t length)
+    size_t Transmit(const std::function<size_t(uint8_t *, size_t)> &callback, const void *buffer, size_t length)
     {
         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(buffer);
         const uint8_t *end = ptr + length;
         return Transmit<const uint8_t *>(callback, ptr, end);
     }
 
+    size_t TransmitBuffer(const std::function<size_t(uint8_t *, size_t)> &callback, const void *buffer, size_t length, std::array<uint8_t, TransmitArrayLength> &workingBuffer)
+    {
+        const uint8_t *ptr = reinterpret_cast<const uint8_t *>(buffer);
+        const uint8_t *end = ptr + length;
+        return TransmitBuffer<const uint8_t *>(callback, ptr, end, workingBuffer);
+    }
+
     template <typename Iterator>
-    size_t Transmit(const std::function<size_t(uint8_t*, size_t)>& callback, const Iterator &start, const Iterator &end)
+    size_t Transmit(const std::function<size_t(uint8_t *, size_t)> &callback, const Iterator &start, const Iterator &end)
     {
         std::array<uint8_t, TransmitArrayLength> buffer;
+        return TransmitBuffer(callback, start, end, buffer);
+    }
+
+    template <typename Iterator>
+    size_t TransmitBuffer(const std::function<size_t(uint8_t *, size_t)> &callback, const Iterator &start, const Iterator &end, std::array<uint8_t, TransmitArrayLength> &buffer)
+    {
         buffer[0] = FRAMESTART;
         size_t length = 0;
         uint16_t crc = 0;
@@ -91,7 +104,7 @@ public:
         }
     }
 
-    size_t Receive(const std::function<void(const uint8_t*, size_t)>& callback,const void *buffer, size_t length)
+    size_t Receive(const std::function<void(const uint8_t *, size_t)> &callback, const void *buffer, size_t length)
     {
         const uint8_t *ptr = reinterpret_cast<const uint8_t *>(buffer);
         const uint8_t *end = ptr + length;
@@ -99,7 +112,7 @@ public:
     }
 
     template <typename Iterator>
-    size_t Receive(const std::function<void(const uint8_t*, size_t)>& callback, const Iterator &start, const Iterator &end)
+    size_t Receive(const std::function<void(const uint8_t *, size_t)> &callback, const Iterator &start, const Iterator &end)
     {
         std::array<uint8_t, ReceiveArrayLength> buffer;
         static size_t offset = 0;
@@ -111,15 +124,15 @@ public:
             switch (ret)
             {
             case PACKET_START_FOUND:
-            	offset = 0;
-            	break;
+                offset = 0;
+                break;
             case RECEIVED_BYTE:
                 buffer[offset] = d;
                 offset++;
                 break;
             case PACKET_READY:
-            	callback(buffer.data(), offset);
-            	offset = 0;
+                callback(buffer.data(), offset);
+                offset = 0;
                 break;
             default:
                 break;
