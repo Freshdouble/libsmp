@@ -21,6 +21,10 @@ namespace libsmp
         {
             return receivedmessages.Dequeue();
         }
-        public abstract sbyte ProcessBytes(byte[] data);
+        public sbyte ProcessBytes(byte[] data)
+        {
+            return ProcessBytes(data);
+        }
+        public abstract sbyte ProcessBytes(Span<byte> data);
     }
 }

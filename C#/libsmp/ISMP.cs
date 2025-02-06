@@ -7,6 +7,6 @@ namespace libsmp
         int StoredMessages {get;}
         byte[] GetMessage();
         byte[] GenerateMessage(byte[] payload);
-        sbyte ProcessBytes(byte[] data);
+        sbyte ProcessBytes(Span<byte> data);
     }
 }

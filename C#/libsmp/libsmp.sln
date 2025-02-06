@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libsmp", "libsmp.csproj", "{DECA1115-6144-C001-A09E-35938DAC5B47}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DECA1115-6144-C001-A09E-35938DAC5B47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DECA1115-6144-C001-A09E-35938DAC5B47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DECA1115-6144-C001-A09E-35938DAC5B47}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DECA1115-6144-C001-A09E-35938DAC5B47}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {126A5F0A-ED49-4862-BB01-94362034B648}
+	EndGlobalSection
+EndGlobal

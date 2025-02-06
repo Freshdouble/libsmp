@@ -17,7 +17,7 @@ namespace libsmp
         [DllImport("libsmp")]
         private static extern uint SMP_CalculateMinimumSendBufferSize(ushort length);
         [DllImport("libsmp")]
-        private static extern sbyte SMP_RecieveInBytes(byte[] data, uint length, IntPtr instance);
+        private static extern sbyte SMP_RecieveInBytes(Span<byte> data, uint length, IntPtr instance);
 
         private IntPtr instance = IntPtr.Zero;
         private readonly FrameReady receiveFrameCallback;
@@ -67,7 +67,7 @@ namespace libsmp
             return GenerateMessage(payload, (int)SMP_CalculateMinimumSendBufferSize((ushort)(payload.Length)));
         }
 
-        public override sbyte ProcessBytes(byte[] data)
+        public override sbyte ProcessBytes(Span<byte> data)
         {
             return SMP_RecieveInBytes(data, (uint)data.Length, instance);
         }

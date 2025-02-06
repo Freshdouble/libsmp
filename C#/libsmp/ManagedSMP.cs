@@ -130,14 +130,14 @@ namespace libsmp
          * @brief  Parse multiple bytes
          * This function calls SMP_RecieveInByte for every byte in the buffer
          ************************************************************************/
-        public override sbyte ProcessBytes(byte[] data)
+        public override sbyte ProcessBytes(Span<byte> data)
         {
             uint i;
             int ret = 0;
             int smpRet;
             for (i = 0; i < data.Length; i++)
             {
-                smpRet = SMP_RecieveInByte(data[i]);
+                smpRet = SMP_RecieveInByte(data[(int)i]);
                 if (smpRet != 0)
                     ret = smpRet;
             }
